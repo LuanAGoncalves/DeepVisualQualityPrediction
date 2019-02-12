@@ -84,6 +84,7 @@ class GenDataset(nn.Module):
 
         df["ref"] = refs
         df["dist"] = dists
+        df["flags"] = io.loadmat(self.dataroot + "dmos.mat")["orgs"].reshape(-1)
         df["dmos"] = io.loadmat(self.dataroot + "dmos.mat")["dmos"].reshape(-1) / 100.0
 
         trainset = []
@@ -128,8 +129,10 @@ class GenDataset(nn.Module):
             DistPatches.append(dist)
 
         return (
-            torch.tensor(RefPatches, dtype=torch.float).view(32, 1, 32, 32),
-            torch.tensor(DistPatches, dtype=torch.float).view(32, 1, 32, 32),
+            torch.tensor(RefPatches, dtype=torch.float).view(self.batchSize, 1, 32, 32),
+            torch.tensor(DistPatches, dtype=torch.float).view(
+                self.batchSize, 1, 32, 32
+            ),
             torch.tensor(batch["dmos"], dtype=torch.float),
         )
 
@@ -148,5 +151,5 @@ class GenDataset(nn.Module):
 if __name__ == "__main__":
     dataset = GenDataset("./databaserelease2/", 32, 32)
     for i, batch in enumerate(dataset.iterate_minibatches(mode="train", shuffle=True)):
-        print(i, batch[0].shape, batch[1].shape, batch[2])
+        print(i, batch[1])
 

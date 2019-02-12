@@ -302,9 +302,8 @@ class MultiscaleDSP(nn.Module):
         self.relu = nn.ReLU(inplace=True)
         self.conv2 = nn.Conv2d(64, 24, 3, 1, 1)
         self.fc1 = nn.Linear(24576, 512)
+        self.bnfc = nn.BatchNorm1d(512)
         self.fc2 = nn.Linear(512, 1)
-
-        self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
         x3 = self.dense2(x)
@@ -321,12 +320,61 @@ class MultiscaleDSP(nn.Module):
         output = output.view(n, c * h * w)
 
         output = self.relu(self.fc1(output))
-        output = self.sigmoid(self.fc2(output))
+        output = self.fc2(output)
 
+        return output
+
+
+class Default(nn.Module):
+    def __init__(self):
+        super(Default, self).__init__()
+        self.features = nn.Sequential(
+            nn.Conv2d(1, 32, 3, 1, 1),
+            nn.BatchNorm2d(32),
+            nn.ReLU(),
+            nn.Conv2d(32, 32, 3, 1, 1),
+            nn.BatchNorm2d(32),
+            nn.ReLU(),
+            nn.MaxPool2d(2),
+            nn.Conv2d(32, 64, 3, 1, 1),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+            nn.Conv2d(64, 64, 3, 1, 1),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+            nn.MaxPool2d(2),
+            nn.Conv2d(64, 128, 3, 1, 1),
+            nn.BatchNorm2d(128),
+            nn.ReLU(),
+            nn.Conv2d(128, 128, 3, 1, 1),
+            nn.BatchNorm2d(128),
+            nn.ReLU(),
+            nn.MaxPool2d(2),
+            nn.Conv2d(128, 256, 3, 1, 1),
+            nn.BatchNorm2d(256),
+            nn.ReLU(),
+            nn.Conv2d(256, 256, 3, 1, 1),
+            nn.BatchNorm2d(256),
+            nn.ReLU(),
+            nn.MaxPool2d(2),
+            nn.Conv2d(256, 512, 3, 1, 1),
+            nn.BatchNorm2d(512),
+            nn.ReLU(),
+            nn.Conv2d(512, 512, 3, 1, 1),
+            nn.BatchNorm2d(512),
+            nn.ReLU(),
+            nn.MaxPool2d(2),
+        )
+        self.regressor = nn.Sequential(nn.Linear(512 * 32, 512), nn.Linear(512, 1))
+
+    def forward(self, x):
+        output = self.features(x)
+        output = output.view(-1)
+        output = self.regressor(output)
         return output
 
 
 if __name__ == "__main__":
     x = torch.rand(32, 1, 32, 32)
-    net = MultiscaleDSP()
+    net = Default()
     print(net(x))
