@@ -45,14 +45,28 @@ class GenDataset(nn.Module):
         super(GenDataset, self).__init__()
         self.dataroot = dataroot
         self.folders = ["refimgs/", "jp2k/", "jpeg/", "wn/", "gblur/", "fastfading/"]
+        self.refImgs = glob(self.dataroot + self.folders[0] + "*.bmp")
         self.trainset, self.validationset, self.testset = self.genDataset()
         self.outputSize = outputSize
         self.batchSize = batchSize
         self.crop = RandomCrop(output_size=32)
 
+    def calcPSNR(self, ref, dist):
+        ref = torch.tensor(
+            cv2.cvtColor(cv2.imread(ref), cv2.COLOR_BGR2GRAY), dtype=torch.float
+        )
+        dist = torch.tensor(
+            cv2.cvtColor(cv2.imread(dist), cv2.COLOR_BGR2GRAY), dtype=torch.float
+        )
+
+        mse = ((ref - dist) ** 2).mean()
+
+        return 10 * torch.log10(255 ** 2 / mse)
+
     def genDataset(self):
         refs = []
         dists = []
+        typeDist = []
         refnames_all = [
             x[0]
             for x in io.loadmat(self.dataroot + "refnames_all.mat")["refnames_all"][0]
@@ -63,50 +77,57 @@ class GenDataset(nn.Module):
                 dists.append(
                     self.dataroot + self.folders[1] + "img" + str(i + 1) + ".bmp"
                 )
+                typeDist.append(self.folders[1].split("/")[0])
             elif i >= 227 and i < 460:
                 dists.append(
                     self.dataroot + self.folders[2] + "img" + str(i - 227 + 1) + ".bmp"
                 )
+                typeDist.append(self.folders[2].split("/")[0])
             elif i >= 460 and i < 634:
                 dists.append(
                     self.dataroot + self.folders[3] + "img" + str(i - 460 + 1) + ".bmp"
                 )
+                typeDist.append(self.folders[3].split("/")[0])
             elif i >= 634 and i < 808:
                 dists.append(
                     self.dataroot + self.folders[4] + "img" + str(i - 634 + 1) + ".bmp"
                 )
+                typeDist.append(self.folders[4].split("/")[0])
             elif i >= 808:
                 dists.append(
                     self.dataroot + self.folders[5] + "img" + str(i - 808 + 1) + ".bmp"
                 )
+                typeDist.append(self.folders[5].split("/")[0])
 
         df = pd.DataFrame(columns=["ref", "dist"])
 
         df["ref"] = refs
+        df["typeDist"] = typeDist
         df["dist"] = dists
-        df["flags"] = io.loadmat(self.dataroot + "dmos.mat")["orgs"].reshape(-1)
-        df["dmos"] = io.loadmat(self.dataroot + "dmos.mat")["dmos"].reshape(-1) / 100.0
+        df["orgs"] = io.loadmat(self.dataroot + "dmos.mat")["orgs"].reshape(-1)
+        df["psnr"] = [float(self.calcPSNR(x, y).numpy()) for x, y in zip(refs, dists)]
+        df["dmos"] = io.loadmat(self.dataroot + "dmos.mat")["dmos"].reshape(-1)
 
         trainset = []
         validationset = []
         testset = []
 
-        imgs = glob("./databaserelease2/refimgs/*.bmp")
+        imgs = self.refImgs
         np.random.shuffle(imgs)
 
         for img in imgs[:17]:
             for i in range(len(df)):
-                if df.iloc[i]["ref"] == img:
+                if df.iloc[i]["ref"] == img and df.iloc[i]["orgs"] == 0:
                     trainset.append(i)
 
         for img in imgs[17 : 17 + 6]:
             for i in range(len(df)):
-                if df.iloc[i]["ref"] == img:
+                if df.iloc[i]["ref"] == img and df.iloc[i]["orgs"] == 0:
                     validationset.append(i)
 
         for img in imgs[23:]:
             for i in range(len(df)):
-                if df.iloc[i]["ref"] == img:
+                if df.iloc[i]["ref"] == img and df.iloc[i]["orgs"] == 0:
                     testset.append(i)
 
         return df.iloc[trainset], df.iloc[validationset], df.iloc[testset]
@@ -148,8 +169,62 @@ class GenDataset(nn.Module):
             yield self.openBatch(dataset.iloc[i])
 
 
+def PSNR(ref, dist):
+    ref = torch.tensor(
+        cv2.cvtColor(cv2.imread(ref), cv2.COLOR_RGB2GRAY), dtype=torch.float
+    )
+    dist = torch.tensor(
+        cv2.cvtColor(cv2.imread(dist), cv2.COLOR_RGB2GRAY), dtype=torch.float
+    )
+    MSE = ((ref - dist) ** 2).mean()
+    return 10 * torch.log10(255 ** 2 / MSE)
+
+
+def sigmoid(x, a, b, c, d):
+    return a + (b - a) / (1.0 + np.exp(-c * (x - d)))
+    # return k * x + x0
+
+
 if __name__ == "__main__":
     dataset = GenDataset("./databaserelease2/", 32, 32)
-    for i, batch in enumerate(dataset.iterate_minibatches(mode="train", shuffle=True)):
-        print(i, batch[1])
+    # for i, batch in enumerate(dataset.iterate_minibatches(mode="train", shuffle=True)):
+    #     print(i, batch[0].shape, batch[1].shape, batch[2])
+    trainset = dataset.trainset
+    folders = dataset.folders
+    ref = dataset.refImgs
 
+    # refImgsDF = trainset[trainset["typeDist"] == folders[1].split("/")[0]]
+    # refImgsDF = refImgsDF[refImgsDF["ref"] == ref[0]]
+    # refImgsDF = refImgsDF.sort_values(by=["psnr"])
+    # print(refImgsDF)
+
+    import matplotlib.pyplot as plt
+    from scipy.optimize import curve_fit
+
+    # print(list(refImgsDF["psnr"]), list(refImgsDF["dmos"]))
+
+    error = 10000000000000000000000000000
+    popt = []
+    for i in range(500):
+        pop, pcov = curve_fit(sigmoid, list(trainset["psnr"]), list(trainset["dmos"]))
+        aux = (
+            np.array(trainset["psnr"])
+            - np.array([sigmoid(x, *pop) for x in list(trainset["psnr"])])
+        ).mean()
+        if aux < error:
+            error = aux
+            popt = pop
+    print(popt)
+
+    plt.plot(
+        list(trainset["psnr"]),
+        [sigmoid(x, *popt) for x in trainset["psnr"]],
+        "*",
+        label="fit",
+    )
+    plt.plot(list(trainset["psnr"]), list(trainset["dmos"]), "o", label="data")
+
+    plt.xlabel("x")
+    plt.ylabel("y")
+    plt.legend()
+    plt.show()

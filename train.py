@@ -1,11 +1,23 @@
 import torch
 from torch.optim import Adam
+from torch.autograd import Variable
 import argparse
 import os
+import numpy as np
 
 from GenDataset import GenDataset
 from criterion import paPSNR
 from models import MultiscaleDSP, Default
+
+
+def weights_init(m):
+    classname = m.__class__.__name__
+    if classname.find("Conv") != -1:
+        torch.nn.init.normal_(m.weight.data, 0.0, 0.02)
+    elif classname.find("BatchNorm") != -1:
+        torch.nn.init.normal_(m.weight.data, 1.0, 0.02)
+        torch.nn.init.constant_(m.bias.data, 0)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -14,6 +26,12 @@ if __name__ == "__main__":
         required=False,
         default="./databaserelease2/",
         help="path to trn dataset",
+    )
+    parser.add_argument(
+        "--network",
+        required=False,
+        default="MultiscaleDSP",
+        help="Default of MultiscaleDSP?",
     )
     parser.add_argument(
         "--networks",
@@ -25,7 +43,7 @@ if __name__ == "__main__":
         "--epochs", type=int, default=150, help="Number of epochs to train the model"
     )
     parser.add_argument("--batchSize", type=int, default=32, help="batch size")
-    parser.add_argument("--lr", type=int, default=0.01, help="learning rate")
+    parser.add_argument("--lr", type=float, default=0.1, help="learning rate")
     opt = parser.parse_args()
 
     if os.path.isdir(opt.networks):
@@ -37,7 +55,11 @@ if __name__ == "__main__":
 
     dataloader = GenDataset(opt.dataroot, 32, opt.batchSize)
 
-    net = Default()
+    if opt.network.lower() == "default":
+        net = Default()
+    elif opt.network.lower() == "multiscaledsp":
+        net = MultiscaleDSP()
+    net.apply(weights_init)
 
     criterion = paPSNR()
     optimizer = Adam(net.parameters(), opt.lr)
@@ -45,10 +67,14 @@ if __name__ == "__main__":
     train_error = []
     validation_error = []
 
+    running_loss = []
+
+    print("# Starting training...")
     for epoch in range(opt.epochs):
         for i, batch in enumerate(
             dataloader.iterate_minibatches(mode="train", shuffle=True)
         ):
+            net = net.train()
             ref, dist, dmos = batch
             ref = ref.cuda()
             net = net.cuda()
@@ -66,6 +92,40 @@ if __name__ == "__main__":
             error = criterion(ref, dist, dmos, output)
             error.backward()
             optimizer.step()
-            train_error.append(error.item())
 
-            print(error)
+            running_loss.append(error.item())
+
+            if i % 30 == 29:
+                running_val_loss = []
+                for batch in dataloader.iterate_minibatches(
+                    mode="validation", shuffle=True
+                ):
+                    net = net.eval()
+                    ref, dist, dmos = batch
+                    ref = ref.cuda()
+                    net = net.cuda()
+
+                    output = net(ref)
+
+                    criterion = criterion.cuda()
+                    ref = ref.cuda()
+                    dist = dist.cuda()
+                    output = output.cuda()
+                    dmos = dmos.cuda()
+
+                    error = criterion(ref, dist, dmos, output)
+                    validation_error.append(error.item())
+                    running_val_loss.append(error.item())
+
+                print(
+                    "[%d, %5d] Training loss: %.5f\tValidation loss: %.5f"
+                    % (
+                        epoch + 1,
+                        i + 1,
+                        np.mean(running_loss),
+                        np.mean(running_val_loss),
+                    )
+                )
+                train_error.append(np.mean(running_loss))
+                validation_error.append(np.mean(running_val_loss))
+                running_loss = []

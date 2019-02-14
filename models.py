@@ -299,7 +299,7 @@ class MultiscaleDSP(nn.Module):
         self.conv1 = nn.Conv2d(6, 64, 3, 1, 1)
         self.bn1 = nn.BatchNorm2d(64)
         self.bn2 = nn.BatchNorm2d(24)
-        self.relu = nn.ReLU(inplace=True)
+        self.relu = nn.ReLU()
         self.conv2 = nn.Conv2d(64, 24, 3, 1, 1)
         self.fc1 = nn.Linear(24576, 512)
         self.bnfc = nn.BatchNorm1d(512)
@@ -319,8 +319,8 @@ class MultiscaleDSP(nn.Module):
 
         output = output.view(n, c * h * w)
 
-        output = self.relu(self.fc1(output))
-        output = self.fc2(output)
+        output = self.relu(self.bnfc(self.fc1(output)))
+        output = self.relu(self.fc2(output))
 
         return output
 
@@ -329,47 +329,51 @@ class Default(nn.Module):
     def __init__(self):
         super(Default, self).__init__()
         self.features = nn.Sequential(
+            nn.BatchNorm2d(1),
             nn.Conv2d(1, 32, 3, 1, 1),
             nn.BatchNorm2d(32),
-            nn.ReLU(),
+            nn.LeakyReLU(0.2),
             nn.Conv2d(32, 32, 3, 1, 1),
             nn.BatchNorm2d(32),
-            nn.ReLU(),
+            nn.LeakyReLU(0.2),
             nn.MaxPool2d(2),
             nn.Conv2d(32, 64, 3, 1, 1),
             nn.BatchNorm2d(64),
-            nn.ReLU(),
+            nn.LeakyReLU(0.2),
             nn.Conv2d(64, 64, 3, 1, 1),
             nn.BatchNorm2d(64),
-            nn.ReLU(),
+            nn.LeakyReLU(0.2),
             nn.MaxPool2d(2),
             nn.Conv2d(64, 128, 3, 1, 1),
             nn.BatchNorm2d(128),
-            nn.ReLU(),
+            nn.LeakyReLU(0.2),
             nn.Conv2d(128, 128, 3, 1, 1),
             nn.BatchNorm2d(128),
-            nn.ReLU(),
+            nn.LeakyReLU(0.2),
             nn.MaxPool2d(2),
             nn.Conv2d(128, 256, 3, 1, 1),
             nn.BatchNorm2d(256),
-            nn.ReLU(),
+            nn.LeakyReLU(0.2),
             nn.Conv2d(256, 256, 3, 1, 1),
             nn.BatchNorm2d(256),
-            nn.ReLU(),
+            nn.LeakyReLU(0.2),
             nn.MaxPool2d(2),
             nn.Conv2d(256, 512, 3, 1, 1),
             nn.BatchNorm2d(512),
-            nn.ReLU(),
+            nn.LeakyReLU(0.2),
             nn.Conv2d(512, 512, 3, 1, 1),
             nn.BatchNorm2d(512),
-            nn.ReLU(),
+            nn.LeakyReLU(0.2),
             nn.MaxPool2d(2),
         )
-        self.regressor = nn.Sequential(nn.Linear(512 * 32, 512), nn.Linear(512, 1))
+        self.regressor = nn.Sequential(
+            nn.Linear(512, 512), nn.ReLU(), nn.Linear(512, 1), nn.ReLU()
+        )
 
     def forward(self, x):
         output = self.features(x)
-        output = output.view(-1)
+        n, c, _, _ = output.shape
+        output = output.view(n, 1, c)
         output = self.regressor(output)
         return output
 
