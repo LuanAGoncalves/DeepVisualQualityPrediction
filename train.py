@@ -6,7 +6,8 @@ import os
 import numpy as np
 
 from GenDataset import GenDataset
-from criterion import paPSNR
+
+# from criterion import paPSNR
 from models import MultiscaleDSP, Default
 
 
@@ -17,6 +18,27 @@ def weights_init(m):
     elif classname.find("BatchNorm") != -1:
         torch.nn.init.normal_(m.weight.data, 1.0, 0.02)
         torch.nn.init.constant_(m.bias.data, 0)
+
+
+def sensitivity(psnr, dmos):
+    a, b, c = [100.0, 0.0, 0.23689602]
+
+    s = torch.log(((b - a) / (dmos - a)) - 1) / c + psnr
+
+    return s
+
+
+def PSNR(Pr, Pd):
+    a, b, c = [63.34354131, 21.01046112, 0.28983582]
+    n = Pr.shape[0]
+    MSE = torch.zeros(n, dtype=torch.float)
+
+    for i in range(n):
+        MSE[i] = ((Pr[i] - Pd[i]) ** 2).mean()
+
+    psnr = 10 * torch.log10(torch.tensor(255 ** 2, dtype=torch.float) / MSE)
+
+    return psnr
 
 
 if __name__ == "__main__":
@@ -61,7 +83,7 @@ if __name__ == "__main__":
         net = MultiscaleDSP()
     net.apply(weights_init)
 
-    criterion = paPSNR()
+    criterion = torch.nn.L1Loss()
     optimizer = Adam(net.parameters(), opt.lr)
 
     train_error = []
@@ -76,8 +98,15 @@ if __name__ == "__main__":
         ):
             net = net.train()
             ref, dist, dmos = batch
+
+            psnr = torch.tensor(PSNR(ref, dist), dtype=torch.float)
+            s = torch.tensor(sensitivity(psnr, dmos), dtype=torch.float)
+
             ref = ref.cuda()
             net = net.cuda()
+            dmos = dmos.cuda()
+
+            s = s.cuda()
 
             optimizer.zero_grad()
 
@@ -89,7 +118,7 @@ if __name__ == "__main__":
             output = output.cuda()
             dmos = dmos.cuda()
 
-            error = criterion(ref, dist, dmos, output)
+            error = criterion(output, s)
             error.backward()
             optimizer.step()
 
@@ -102,8 +131,15 @@ if __name__ == "__main__":
                 ):
                     net = net.eval()
                     ref, dist, dmos = batch
+
+                    psnr = torch.tensor(PSNR(ref, dist), dtype=torch.float)
+                    s = torch.tensor(sensitivity(psnr, dmos), dtype=torch.float)
+
                     ref = ref.cuda()
                     net = net.cuda()
+                    dmos = dmos.cuda()
+
+                    s = s.cuda()
 
                     output = net(ref)
 
@@ -113,7 +149,7 @@ if __name__ == "__main__":
                     output = output.cuda()
                     dmos = dmos.cuda()
 
-                    error = criterion(ref, dist, dmos, output)
+                    error = criterion(output, s)
                     validation_error.append(error.item())
                     running_val_loss.append(error.item())
 

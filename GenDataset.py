@@ -154,7 +154,7 @@ class GenDataset(nn.Module):
             torch.tensor(DistPatches, dtype=torch.float).view(
                 self.batchSize, 1, 32, 32
             ),
-            torch.tensor(batch["dmos"], dtype=torch.float),
+            batch["dmos"] * torch.ones(32, dtype=torch.float),
         )
 
     def iterate_minibatches(self, batchsize=1, mode="train", shuffle=False):
@@ -187,29 +187,23 @@ def sigmoid(x, a, b, c, d):
 
 if __name__ == "__main__":
     dataset = GenDataset("./databaserelease2/", 32, 32)
-    # for i, batch in enumerate(dataset.iterate_minibatches(mode="train", shuffle=True)):
-    #     print(i, batch[0].shape, batch[1].shape, batch[2])
     trainset = dataset.trainset
     folders = dataset.folders
     ref = dataset.refImgs
 
-    # refImgsDF = trainset[trainset["typeDist"] == folders[1].split("/")[0]]
-    # refImgsDF = refImgsDF[refImgsDF["ref"] == ref[0]]
-    # refImgsDF = refImgsDF.sort_values(by=["psnr"])
-    # print(refImgsDF)
-
     import matplotlib.pyplot as plt
     from scipy.optimize import curve_fit
-
-    # print(list(refImgsDF["psnr"]), list(refImgsDF["dmos"]))
 
     error = 10000000000000000000000000000
     popt = []
     for i in range(500):
         pop, pcov = curve_fit(sigmoid, list(trainset["psnr"]), list(trainset["dmos"]))
+        pcov = np.array(pcov)
         aux = (
-            np.array(trainset["psnr"])
-            - np.array([sigmoid(x, *pop) for x in list(trainset["psnr"])])
+            np.array(trainset["dmos"])
+            - np.array(
+                [sigmoid(x, 100.0, 0.0, pop[2], pop[3]) for x in list(trainset["psnr"])]
+            )
         ).mean()
         if aux < error:
             error = aux
