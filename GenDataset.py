@@ -43,6 +43,7 @@ class RandomCrop(object):
 class GenDataset(nn.Module):
     def __init__(self, dataroot, outputSize, batchSize):
         super(GenDataset, self).__init__()
+        self.eps = 1e-20
         self.dataroot = dataroot
         self.folders = ["refimgs/", "jp2k/", "jpeg/", "wn/", "gblur/", "fastfading/"]
         self.refImgs = glob(self.dataroot + self.folders[0] + "*.bmp")
@@ -106,7 +107,14 @@ class GenDataset(nn.Module):
         df["dist"] = dists
         df["orgs"] = io.loadmat(self.dataroot + "dmos.mat")["orgs"].reshape(-1)
         df["psnr"] = [float(self.calcPSNR(x, y).numpy()) for x, y in zip(refs, dists)]
-        df["dmos"] = io.loadmat(self.dataroot + "dmos.mat")["dmos"].reshape(-1)
+        df["dmos"] = io.loadmat(self.dataroot + "dmos_realigned.mat")[
+            "dmos_new"
+        ].reshape(-1)
+        df["std"] = io.loadmat(self.dataroot + "dmos_realigned.mat")[
+            "dmos_std"
+        ].reshape(-1)
+
+        df = df[df["dmos"] <= 100.0]
 
         trainset = []
         validationset = []
@@ -169,20 +177,8 @@ class GenDataset(nn.Module):
             yield self.openBatch(dataset.iloc[i])
 
 
-def PSNR(ref, dist):
-    ref = torch.tensor(
-        cv2.cvtColor(cv2.imread(ref), cv2.COLOR_RGB2GRAY), dtype=torch.float
-    )
-    dist = torch.tensor(
-        cv2.cvtColor(cv2.imread(dist), cv2.COLOR_RGB2GRAY), dtype=torch.float
-    )
-    MSE = ((ref - dist) ** 2).mean()
-    return 10 * torch.log10(255 ** 2 / MSE)
-
-
 def sigmoid(x, a, b, c, d):
     return a + (b - a) / (1.0 + np.exp(-c * (x - d)))
-    # return k * x + x0
 
 
 if __name__ == "__main__":
@@ -196,14 +192,12 @@ if __name__ == "__main__":
 
     error = 10000000000000000000000000000
     popt = []
-    for i in range(500):
+    for i in range(1000):
         pop, pcov = curve_fit(sigmoid, list(trainset["psnr"]), list(trainset["dmos"]))
         pcov = np.array(pcov)
         aux = (
             np.array(trainset["dmos"])
-            - np.array(
-                [sigmoid(x, 100.0, 0.0, pop[2], pop[3]) for x in list(trainset["psnr"])]
-            )
+            - np.array([sigmoid(x, *pop) for x in list(trainset["psnr"])])
         ).mean()
         if aux < error:
             error = aux

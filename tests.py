@@ -9,7 +9,7 @@ from GenDataset import GenDataset
 def sensitivity(psnr, dmos):
     psnr = torch.tensor(psnr, dtype=torch.float)
     dmos = torch.tensor(dmos, dtype=torch.float)
-    a, b, c = [100.0, 0.0, 0.23689602]
+    a, b, c = [94.48166952, 5.182933, 0.2021839]
     if dmos - a >= 0:
         print(dmos)
     s = torch.log(((b - a) / (dmos - a)) - 1) / c + psnr

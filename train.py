@@ -6,8 +6,6 @@ import os
 import numpy as np
 
 from GenDataset import GenDataset
-
-# from criterion import paPSNR
 from models import MultiscaleDSP, Default
 
 
@@ -21,7 +19,7 @@ def weights_init(m):
 
 
 def sensitivity(psnr, dmos):
-    a, b, c = [100.0, 0.0, 0.23689602]
+    a, b, c = [94.48166952, 5.182933, 0.2021839]
 
     s = torch.log(((b - a) / (dmos - a)) - 1) / c + psnr
 
@@ -29,7 +27,6 @@ def sensitivity(psnr, dmos):
 
 
 def PSNR(Pr, Pd):
-    a, b, c = [63.34354131, 21.01046112, 0.28983582]
     n = Pr.shape[0]
     MSE = torch.zeros(n, dtype=torch.float)
 
