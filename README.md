@@ -7,6 +7,7 @@ This project is based on [Estimation of distortion sensitivity for visual qualit
 - [Managing conda environment](#managing-conda-environment)
 - [Dataset](#dataset)
 - [Training](#training)
+- [Status](#status)
 
 ## Managing conda environment
 
