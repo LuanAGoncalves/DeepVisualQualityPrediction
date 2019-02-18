@@ -107,14 +107,13 @@ class GenDataset(nn.Module):
         df["dist"] = dists
         df["orgs"] = io.loadmat(self.dataroot + "dmos.mat")["orgs"].reshape(-1)
         df["psnr"] = [float(self.calcPSNR(x, y).numpy()) for x, y in zip(refs, dists)]
-        df["dmos"] = io.loadmat(self.dataroot + "dmos_realigned.mat")[
-            "dmos_new"
-        ].reshape(-1)
+        DMOS = io.loadmat(self.dataroot + "dmos_realigned.mat")["dmos_new"].reshape(-1)
+        DMOS[DMOS[:] >= 96.16552146] = 96.1654
+        DMOS[DMOS[:] <= 0.4231659] = 0.4232
+        df["dmos"] = DMOS
         df["std"] = io.loadmat(self.dataroot + "dmos_realigned.mat")[
             "dmos_std"
         ].reshape(-1)
-
-        df = df[df["dmos"] <= 100.0]
 
         trainset = []
         validationset = []

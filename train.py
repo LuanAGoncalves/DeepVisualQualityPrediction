@@ -4,9 +4,26 @@ from torch.autograd import Variable
 import argparse
 import os
 import numpy as np
+import shutil
 
 from GenDataset import GenDataset
 from models import MultiscaleDSP, Default
+
+
+def saveChekpoint(epoch, model, optimizer, train_loss, val_loss, PATH, isBest=False):
+    torch.save(
+        {
+            "epoch": epoch,
+            "state_dict": model.state_dict(),
+            "optimizer_state_dict": optimizer.state_dict(),
+            "train_loss": train_loss,
+            "val_loss": val_loss,
+        },
+        PATH,
+    )
+
+    if isBest:
+        shutil.copyfile(PATH, "model_best.pth.tar")
 
 
 def weights_init(m):
@@ -19,7 +36,7 @@ def weights_init(m):
 
 
 def sensitivity(psnr, dmos):
-    a, b, c = [94.48166952, 5.182933, 0.2021839]
+    a, b, c = [96.16552146, 0.4231659, 0.17716917]
 
     s = torch.log(((b - a) / (dmos - a)) - 1) / c + psnr
 
@@ -32,6 +49,8 @@ def PSNR(Pr, Pd):
 
     for i in range(n):
         MSE[i] = ((Pr[i] - Pd[i]) ** 2).mean()
+
+    MSE[MSE[:] == 0.0] = 0.0000001
 
     psnr = 10 * torch.log10(torch.tensor(255 ** 2, dtype=torch.float) / MSE)
 
@@ -46,6 +65,7 @@ if __name__ == "__main__":
         default="./databaserelease2/",
         help="path to trn dataset",
     )
+    parser.add_argument("--model", required=False, default=None, help="Checkpoint")
     parser.add_argument(
         "--network",
         required=False,
@@ -88,8 +108,20 @@ if __name__ == "__main__":
 
     running_loss = []
 
+    if opt.model == None:
+        start = 0
+    else:
+        print("Loading checkpoint...")
+        checkpoint = torch.load(opt.model)
+        net.load_state_dict(checkpoint["state_dict"])
+        start = checkpoint["epoch"]
+        optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+        train_error = checkpoint["train_loss"]
+        validation_error = checkpoint["val_loss"]
+        print("Done!")
+
     print("# Starting training...")
-    for epoch in range(opt.epochs):
+    for epoch in range(start, opt.epochs):
         for i, batch in enumerate(
             dataloader.iterate_minibatches(mode="train", shuffle=True)
         ):
@@ -147,7 +179,6 @@ if __name__ == "__main__":
                     dmos = dmos.cuda()
 
                     error = criterion(output, s)
-                    validation_error.append(error.item())
                     running_val_loss.append(error.item())
 
                 print(
@@ -159,6 +190,25 @@ if __name__ == "__main__":
                         np.mean(running_val_loss),
                     )
                 )
+
+                if len(validation_error) == 0:
+                    best = True
+                elif running_val_loss[-1] < min(validation_error):
+                    best = True
+                else:
+                    best = False
+
                 train_error.append(np.mean(running_loss))
                 validation_error.append(np.mean(running_val_loss))
+
+                saveChekpoint(
+                    epoch,
+                    net,
+                    optimizer,
+                    train_error,
+                    validation_error,
+                    opt.networks + str(i) + ".pth.tar",
+                    best,
+                )
+
                 running_loss = []
