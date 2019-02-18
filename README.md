@@ -20,7 +20,7 @@ Solving environment: /
 
 ## Dataset
 
-We've used the [LIVE dataset](http://live.ece.utexas.edu/research/quality/subjective.htm) for training and testing.
+We've used the [LIVE dataset](http://live.ece.utexas.edu/research/quality/subjective.htm) for training and testing. You just need to download and extract it on root directory of the project.
 
 ## Training
 
@@ -31,3 +31,8 @@ $ python -Wi train.py
 ...
 ```
 
+## Status
+
+- [x] Prepare dataset
+- [x] Create train.py
+- [ ] Create test.py
