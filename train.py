@@ -193,7 +193,7 @@ if __name__ == "__main__":
 
                 if len(validation_error) == 0:
                     best = True
-                elif running_val_loss[-1] < min(validation_error):
+                elif np.mean(running_val_loss) < min(validation_error):
                     best = True
                 else:
                     best = False
