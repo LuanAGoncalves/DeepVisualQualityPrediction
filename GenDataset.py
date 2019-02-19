@@ -178,16 +178,37 @@ class GenDataset(nn.Module):
             batch["sensitivity"] * torch.ones(32, dtype=torch.float),
         )
 
+    def openBatchTest(self, batch):
+        ref = batch["ref"]
+        dist = batch["dist"]
+
+        RefImg = np.array(cv2.cvtColor(cv2.imread(ref), cv2.COLOR_RGB2GRAY), np.float32)
+        DistImg = np.array(
+            cv2.cvtColor(cv2.imread(dist), cv2.COLOR_RGB2GRAY), np.float32
+        )
+
+        c, h, w = RefImg.shape
+
+        return (
+            torch.tensor(RefImg, dtype=torch.float).view(1, 1, h, w),
+            torch.tensor(DistImg, dtype=torch.float).view(1, 1, h, w),
+            batch["dmos"],
+        )
+
     def iterate_minibatches(self, batchsize=1, mode="train", shuffle=False):
         if mode.lower() == "train":
             dataset = self.trainset
         elif mode.lower() == "validation":
             dataset = self.validationset
-
-        if shuffle:
-            dataset = dataset.sample(frac=1).reset_index(drop=True)
-        for i in range(len(dataset)):
-            yield self.openBatch(dataset.iloc[i])
+        elif mode.lower() == "test":
+            dataset = self.testset
+        if mode.lower() != "test":
+            if shuffle:
+                dataset = dataset.sample(frac=1).reset_index(drop=True)
+            for i in range(len(dataset)):
+                yield self.openBatch(dataset.iloc[i])
+        else:
+            yield self.openBatchTest(dataset.iloc[i])
 
 
 def sigmoid(x, a, b, c, d):

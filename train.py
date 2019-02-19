@@ -1,6 +1,5 @@
 import torch
 from torch.optim import Adam
-from torch.autograd import Variable
 import argparse
 import os
 import numpy as np
