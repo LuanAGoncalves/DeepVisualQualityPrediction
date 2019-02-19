@@ -367,13 +367,17 @@ class Default(nn.Module):
             nn.MaxPool2d(2),
         )
         self.regressor = nn.Sequential(
-            nn.Linear(512, 512), nn.ReLU(), nn.Linear(512, 1), nn.ReLU()
+            nn.Linear(512, 512),
+            nn.BatchNorm1d(512),
+            nn.ReLU(),
+            nn.Linear(512, 1),
+            nn.ReLU(),
         )
 
     def forward(self, x):
         output = self.features(x)
         n, c, _, _ = output.shape
-        output = output.view(n, 1, c)
+        output = output.view(n, c)
         output = self.regressor(output)
         return output
 

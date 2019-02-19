@@ -64,6 +64,13 @@ class GenDataset(nn.Module):
 
         return 10 * torch.log10(255 ** 2 / mse)
 
+    def sensitivity(self, psnr, dmos):
+        a, b, c = [96.16552146, 0.4231659, 0.17716917]
+
+        s = torch.log(((b - a) / (dmos - a)) - 1) / c + psnr
+
+        return s
+
     def genDataset(self):
         refs = []
         dists = []
@@ -114,6 +121,13 @@ class GenDataset(nn.Module):
         df["std"] = io.loadmat(self.dataroot + "dmos_realigned.mat")[
             "dmos_std"
         ].reshape(-1)
+        df["sensitivity"] = [
+            self.sensitivity(
+                torch.tensor(psnr, dtype=torch.float),
+                torch.tensor(dmos, dtype=torch.float),
+            )
+            for psnr, dmos in zip(list(df["psnr"]), list(df["dmos"]))
+        ]
 
         trainset = []
         validationset = []
@@ -161,7 +175,7 @@ class GenDataset(nn.Module):
             torch.tensor(DistPatches, dtype=torch.float).view(
                 self.batchSize, 1, 32, 32
             ),
-            batch["dmos"] * torch.ones(32, dtype=torch.float),
+            batch["sensitivity"] * torch.ones(32, dtype=torch.float),
         )
 
     def iterate_minibatches(self, batchsize=1, mode="train", shuffle=False):

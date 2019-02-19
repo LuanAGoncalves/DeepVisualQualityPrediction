@@ -5,6 +5,7 @@ import argparse
 import os
 import numpy as np
 import shutil
+import time
 
 from GenDataset import GenDataset
 from models import MultiscaleDSP, Default
@@ -67,10 +68,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("--model", required=False, default=None, help="Checkpoint")
     parser.add_argument(
-        "--network",
-        required=False,
-        default="MultiscaleDSP",
-        help="Default of MultiscaleDSP?",
+        "--network", required=False, default="Default", help="Default of MultiscaleDSP?"
     )
     parser.add_argument(
         "--networks",
@@ -126,15 +124,12 @@ if __name__ == "__main__":
             dataloader.iterate_minibatches(mode="train", shuffle=True)
         ):
             net = net.train()
-            ref, dist, dmos = batch
+            ref, dist, s = batch
 
             psnr = torch.tensor(PSNR(ref, dist), dtype=torch.float)
-            s = torch.tensor(sensitivity(psnr, dmos), dtype=torch.float)
 
             ref = ref.cuda()
             net = net.cuda()
-            dmos = dmos.cuda()
-
             s = s.cuda()
 
             optimizer.zero_grad()
@@ -145,7 +140,6 @@ if __name__ == "__main__":
             ref = ref.cuda()
             dist = dist.cuda()
             output = output.cuda()
-            dmos = dmos.cuda()
 
             error = criterion(output, s)
             error.backward()
@@ -159,15 +153,12 @@ if __name__ == "__main__":
                     mode="validation", shuffle=True
                 ):
                     net = net.eval()
-                    ref, dist, dmos = batch
+                    ref, dist, s = batch
 
                     psnr = torch.tensor(PSNR(ref, dist), dtype=torch.float)
-                    s = torch.tensor(sensitivity(psnr, dmos), dtype=torch.float)
 
                     ref = ref.cuda()
                     net = net.cuda()
-                    dmos = dmos.cuda()
-
                     s = s.cuda()
 
                     output = net(ref)
@@ -176,7 +167,6 @@ if __name__ == "__main__":
                     ref = ref.cuda()
                     dist = dist.cuda()
                     output = output.cuda()
-                    dmos = dmos.cuda()
 
                     error = criterion(output, s)
                     running_val_loss.append(error.item())
