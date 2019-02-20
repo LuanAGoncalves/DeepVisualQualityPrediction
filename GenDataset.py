@@ -41,7 +41,7 @@ class RandomCrop(object):
 
 
 class GenDataset(nn.Module):
-    def __init__(self, dataroot, outputSize, batchSize):
+    def __init__(self, dataroot, outputSize, batchSize=32):
         super(GenDataset, self).__init__()
         self.eps = 1e-20
         self.dataroot = dataroot
@@ -187,7 +187,7 @@ class GenDataset(nn.Module):
             cv2.cvtColor(cv2.imread(dist), cv2.COLOR_RGB2GRAY), np.float32
         )
 
-        c, h, w = RefImg.shape
+        h, w = RefImg.shape
 
         return (
             torch.tensor(RefImg, dtype=torch.float).view(1, 1, h, w),
@@ -208,7 +208,8 @@ class GenDataset(nn.Module):
             for i in range(len(dataset)):
                 yield self.openBatch(dataset.iloc[i])
         else:
-            yield self.openBatchTest(dataset.iloc[i])
+            for i in range(len(dataset)):
+                yield self.openBatchTest(dataset.iloc[i])
 
 
 def sigmoid(x, a, b, c, d):

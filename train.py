@@ -201,3 +201,4 @@ if __name__ == "__main__":
                 )
 
                 running_loss = []
+    print("Done!")

@@ -34,6 +34,5 @@ $ python -Wi train.py
 
 ## Status
 
-- [x] Prepare dataset
-- [x] Create train.py
-- [ ] Create test.py
+- [x] Reproduce the results of [Estimation of distortion sensitivity for visual quality prediction using a convolutional neural network](https://www.sciencedirect.com/science/article/pii/S1051200418308868)
+- [ ] Use a network with different receptive fields.
