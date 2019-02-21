@@ -25,7 +25,7 @@ def saveChekpoint(
     )
 
     if isBest:
-        shutil.copyfile(PATH, network + "_model_best.pth.tar")
+        shutil.copyfile(PATH, network.lower() + "_model_best.pth.tar")
 
 
 def weights_init(m):
