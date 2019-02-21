@@ -1,5 +1,5 @@
 import torch
-from torch.optim import Adam
+from torch.optim import Adam, SGD
 import argparse
 import os
 import numpy as np
@@ -10,7 +10,9 @@ from GenDataset import GenDataset
 from models import MultiscaleDSP, Default
 
 
-def saveChekpoint(epoch, model, optimizer, train_loss, val_loss, PATH, isBest=False):
+def saveChekpoint(
+    epoch, model, optimizer, train_loss, val_loss, PATH, isBest=False, network="Default"
+):
     torch.save(
         {
             "epoch": epoch,
@@ -23,7 +25,7 @@ def saveChekpoint(epoch, model, optimizer, train_loss, val_loss, PATH, isBest=Fa
     )
 
     if isBest:
-        shutil.copyfile(PATH, "model_best.pth.tar")
+        shutil.copyfile(PATH, network + "_model_best.pth.tar")
 
 
 def weights_init(m):
@@ -67,6 +69,9 @@ if __name__ == "__main__":
     )
     parser.add_argument("--model", required=False, default=None, help="Checkpoint")
     parser.add_argument(
+        "--generate", required=False, default=False, help="Generate dataset"
+    )
+    parser.add_argument(
         "--network", required=False, default="Default", help="Default of MultiscaleDSP?"
     )
     parser.add_argument(
@@ -89,7 +94,7 @@ if __name__ == "__main__":
         os.mkdir(opt.networks)
         print("Done!")
 
-    dataloader = GenDataset(opt.dataroot, 32, opt.batchSize)
+    dataloader = GenDataset(opt.dataroot, 32, opt.batchSize, generate=True)
 
     if opt.network.lower() == "default":
         net = Default()
@@ -110,6 +115,7 @@ if __name__ == "__main__":
     else:
         print("Loading checkpoint...")
         checkpoint = torch.load(opt.model)
+        net = net.cuda()
         net.load_state_dict(checkpoint["state_dict"])
         start = checkpoint["epoch"]
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
@@ -198,6 +204,7 @@ if __name__ == "__main__":
                     validation_error,
                     opt.networks + str(i) + ".pth.tar",
                     best,
+                    opt.network,
                 )
 
                 running_loss = []
