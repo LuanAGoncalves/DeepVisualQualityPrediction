@@ -35,7 +35,7 @@ $ python -Wi train.py --generate=True
 If you already created the dataset files, run:
 
 ```shell
-$ python -Wi train.py --generate=True
+$ python -Wi train.py
 ...
 ```
 
