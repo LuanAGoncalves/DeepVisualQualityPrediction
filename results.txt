@@ -1,0 +1,65 @@
+# Results:
+1) EFFRI:
+   1.1)Live - Full database.
+   - Default:
+	LCC: 0.861340	SROCC: 0.892179
+   - MultiscaleDSP:
+	LCC: 0.865254	SROCC: 0.893982
+   1.2)Live - JP2K.
+   - Default:
+	LCC: xxxxxxxx	SROCC: xxxxxxxx
+   - MultiscaleDSP:
+	LCC: xxxxxxxx	SROCC: xxxxxxxx
+   1.3)Live - JPEG.
+   - Default:
+	LCC: xxxxxxxx	SROCC: xxxxxxxx
+   - MultiscaleDSP:
+	LCC: xxxxxxxx	SROCC: xxxxxxxx
+   1.4)Live - wn.
+   - Default:
+	LCC: xxxxxxxx	SROCC: xxxxxxxx
+   - MultiscaleDSP:
+	LCC: xxxxxxxx	SROCC: xxxxxxxx
+   1.5)Live - Fast Fading.
+   - Default:
+	LCC: xxxxxxxx	SROCC: xxxxxxxx
+   - MultiscaleDSP:
+	LCC: xxxxxxxx	SROCC: xxxxxxxx
+   1.6)Live - Gaussian blur.
+   - Default:
+	LCC: xxxxxxxx	SROCC: xxxxxxxx
+   - MultiscaleDSP:
+	LCC: xxxxxxxx	SROCC: xxxxxxxx
+
+2) EFFDI:
+   2.1)Live - Full database.
+   - Default:
+	LCC: xxxxxxxx	SROCC: xxxxxxxx
+   - MultiscaleDSP:
+	LCC: xxxxxxxx	SROCC: xxxxxxxx
+   2.2)Live - JP2K.
+   - Default:
+	LCC: xxxxxxxx	SROCC: xxxxxxxx
+   - MultiscaleDSP:
+	LCC: xxxxxxxx	SROCC: xxxxxxxx
+   2.3)Live - JPEG.
+   - Default:
+	LCC: xxxxxxxx	SROCC: xxxxxxxx
+   - MultiscaleDSP:
+	LCC: xxxxxxxx	SROCC: xxxxxxxx
+   2.4)Live - wn.
+   - Default:
+	LCC: xxxxxxxx	SROCC: xxxxxxxx
+   - MultiscaleDSP:
+	LCC: xxxxxxxx	SROCC: xxxxxxxx
+   2.5)Live - Fast Fading.
+   - Default:
+	LCC: xxxxxxxx	SROCC: xxxxxxxx
+   - MultiscaleDSP:
+	LCC: xxxxxxxx	SROCC: xxxxxxxx
+   2.6)Live - Gaussian blur.
+   - Default:
+	LCC: xxxxxxxx	SROCC: xxxxxxxx
+   - MultiscaleDSP:
+	LCC: xxxxxxxx	SROCC: xxxxxxxx
+
