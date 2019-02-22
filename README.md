@@ -25,10 +25,17 @@ We've used the [LIVE dataset](http://live.ece.utexas.edu/research/quality/subjec
 
 ## Training
 
-In order to train the model, run:
+With you're running the code for the first time you'll need to enable the [train.py](https://github.com/LuanAGoncalves/DeepVisualQualityPrediction/blob/master/train.py) script to create dataset files. To do it, run:
 
 ```shell
-$ python -Wi train.py
+$ python -Wi train.py --generate=True
+...
+```
+
+If you already created the dataset files, run:
+
+```shell
+$ python -Wi train.py --generate=True
 ...
 ```
 
