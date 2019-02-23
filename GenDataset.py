@@ -206,13 +206,22 @@ class GenDataset(nn.Module):
             batch["dmos"],
         )
 
-    def iterate_minibatches(self, batchsize=1, mode="train", shuffle=False):
+    def iterate_minibatches(
+        self, batchsize=1, mode="train", distortion=0, shuffle=False
+    ):
+        distTypes = ["jp2k", "jpeg", "wn", "gblur", "fastfading"]
         if mode.lower() == "train":
             dataset = self.trainset
         elif mode.lower() == "validation":
             dataset = self.validationset
         elif mode.lower() == "test":
             dataset = self.testset
+
+        if distortion == 0:
+            pass
+        else:
+            dataset[dataset["typeDist"] == distTypes[distortion]]
+
         if mode.lower() != "test":
             if shuffle:
                 dataset = dataset.sample(frac=1).reset_index(drop=True)
