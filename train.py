@@ -85,6 +85,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("--batchSize", type=int, default=32, help="batch size")
     parser.add_argument("--lr", type=float, default=0.1, help="learning rate")
+    parser.add_argument("--distType", type=int, default=None, help="Distortion type")
     opt = parser.parse_args()
 
     if os.path.isdir(opt.networks):
@@ -126,7 +127,9 @@ if __name__ == "__main__":
     print("# Starting training...")
     for epoch in range(start, opt.epochs):
         for i, batch in enumerate(
-            dataloader.iterate_minibatches(mode="train", shuffle=True)
+            dataloader.iterate_minibatches(
+                mode="train", distortion=opt.distType, shuffle=True
+            )
         ):
             net = net.train()
             ref, dist, s = batch
@@ -155,7 +158,7 @@ if __name__ == "__main__":
             if i % 30 == 29:
                 running_val_loss = []
                 for batch in dataloader.iterate_minibatches(
-                    mode="validation", shuffle=True
+                    mode="validation", distortion=opt.distType, shuffle=True
                 ):
                     net = net.eval()
                     ref, dist, s = batch

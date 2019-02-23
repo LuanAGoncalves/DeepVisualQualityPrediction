@@ -207,7 +207,7 @@ class GenDataset(nn.Module):
         )
 
     def iterate_minibatches(
-        self, batchsize=1, mode="train", distortion=0, shuffle=False
+        self, batchsize=1, mode="train", distortion=None, shuffle=False
     ):
         distTypes = ["jp2k", "jpeg", "wn", "gblur", "fastfading"]
         if mode.lower() == "train":
@@ -217,7 +217,7 @@ class GenDataset(nn.Module):
         elif mode.lower() == "test":
             dataset = self.testset
 
-        if distortion == 0:
+        if distortion == None:
             pass
         else:
             dataset[dataset["typeDist"] == distTypes[distortion]]

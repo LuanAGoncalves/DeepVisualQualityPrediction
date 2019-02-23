@@ -74,7 +74,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--network", required=False, default="Default", help="Default of MultiscaleDSP?"
     )
-    parser.add_argument("--distType", type=int, default=0, help="Distortion type")
+    parser.add_argument("--distType", type=int, default=None, help="Distortion type")
     opt = parser.parse_args()
 
     dataloader = GenDataset(opt.dataroot, 32)
