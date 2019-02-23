@@ -91,7 +91,7 @@ if __name__ == "__main__":
 
     print("# Starting testing...")
     for i, batch in enumerate(
-        dataloader.iterate_minibatches(mode="test", distortion=1)
+        dataloader.iterate_minibatches(mode="test", distortion=opt.distType)
     ):
         print("Image %d" % (i))
         ref, dist, dmos = batch
