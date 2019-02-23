@@ -74,6 +74,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--network", required=False, default="Default", help="Default of MultiscaleDSP?"
     )
+    parser.add_argument("--distType", type=int, default=0, help="Distortion type")
     opt = parser.parse_args()
 
     dataloader = GenDataset(opt.dataroot, 32)
@@ -89,7 +90,9 @@ if __name__ == "__main__":
     QP, QPest = [], []
 
     print("# Starting testing...")
-    for i, batch in enumerate(dataloader.iterate_minibatches(mode="test")):
+    for i, batch in enumerate(
+        dataloader.iterate_minibatches(mode="test", distortion=1)
+    ):
         print("Image %d" % (i))
         ref, dist, dmos = batch
         PrPatcehs, PdPatches = extractPatches(ref, dist)
