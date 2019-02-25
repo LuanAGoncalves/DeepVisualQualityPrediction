@@ -220,7 +220,7 @@ class GenDataset(nn.Module):
         if distortion == None:
             pass
         else:
-            dataset[dataset["typeDist"] == distTypes[distortion]]
+            dataset = dataset[dataset["typeDist"] == distTypes[distortion]]
 
         if mode.lower() != "test":
             if shuffle:
