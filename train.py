@@ -11,7 +11,15 @@ from models import MultiscaleDSP, Default
 
 
 def saveChekpoint(
-    epoch, model, optimizer, train_loss, val_loss, PATH, isBest=False, network="Default"
+    epoch,
+    model,
+    optimizer,
+    train_loss,
+    val_loss,
+    PATH,
+    run,
+    isBest=False,
+    network="Default",
 ):
     torch.save(
         {
@@ -20,12 +28,13 @@ def saveChekpoint(
             "optimizer_state_dict": optimizer.state_dict(),
             "train_loss": train_loss,
             "val_loss": val_loss,
+            "run": run,
         },
         PATH,
     )
 
     if isBest:
-        shutil.copyfile(PATH, network.lower() + "_model_best.pth.tar")
+        shutil.copyfile(PATH, str(run) + "_" + network.lower() + "_model_best.pth.tar")
 
 
 def weights_init(m):
@@ -86,6 +95,7 @@ if __name__ == "__main__":
     parser.add_argument("--batchSize", type=int, default=32, help="batch size")
     parser.add_argument("--lr", type=float, default=0.1, help="learning rate")
     parser.add_argument("--distType", type=int, default=None, help="Distortion type")
+    parser.add_argument("--runs", type=int, default=None, help="Number of runs")
     opt = parser.parse_args()
 
     if os.path.isdir(opt.networks):
@@ -124,91 +134,94 @@ if __name__ == "__main__":
         validation_error = checkpoint["val_loss"]
         print("Done!")
 
-    print("# Starting training...")
-    for epoch in range(start, opt.epochs):
-        for i, batch in enumerate(
-            dataloader.iterate_minibatches(
-                mode="train", distortion=opt.distType, shuffle=True
-            )
-        ):
-            net = net.train()
-            ref, dist, s = batch
+    for n in range(opt.runs):
+        print("# Starting training...")
+        for epoch in range(start, opt.epochs):
+            for i, batch in enumerate(
+                dataloader.iterate_minibatches(
+                    mode="train", distortion=opt.distType, shuffle=True
+                )
+            ):
+                net = net.train()
+                ref, dist, s = batch
 
-            psnr = torch.tensor(PSNR(ref, dist), dtype=torch.float)
+                psnr = torch.tensor(PSNR(ref, dist), dtype=torch.float)
 
-            ref = ref.cuda()
-            net = net.cuda()
-            s = s.cuda()
+                ref = ref.cuda()
+                net = net.cuda()
+                s = s.cuda()
 
-            optimizer.zero_grad()
+                optimizer.zero_grad()
 
-            output = net(ref)
+                output = net(ref)
 
-            criterion = criterion.cuda()
-            ref = ref.cuda()
-            dist = dist.cuda()
-            output = output.cuda()
+                criterion = criterion.cuda()
+                ref = ref.cuda()
+                dist = dist.cuda()
+                output = output.cuda()
 
-            error = criterion(output, s)
-            error.backward()
-            optimizer.step()
+                error = criterion(output, s)
+                error.backward()
+                optimizer.step()
 
-            running_loss.append(error.item())
+                running_loss.append(error.item())
 
-            if i % 30 == 29:
-                running_val_loss = []
-                for batch in dataloader.iterate_minibatches(
-                    mode="validation", distortion=opt.distType, shuffle=True
-                ):
-                    net = net.eval()
-                    ref, dist, s = batch
+                if i % 30 == 29:
+                    running_val_loss = []
+                    for batch in dataloader.iterate_minibatches(
+                        mode="validation", distortion=opt.distType, shuffle=True
+                    ):
+                        net = net.eval()
+                        ref, dist, s = batch
 
-                    psnr = torch.tensor(PSNR(ref, dist), dtype=torch.float)
+                        psnr = torch.tensor(PSNR(ref, dist), dtype=torch.float)
 
-                    ref = ref.cuda()
-                    net = net.cuda()
-                    s = s.cuda()
+                        ref = ref.cuda()
+                        net = net.cuda()
+                        s = s.cuda()
 
-                    output = net(ref)
+                        output = net(ref)
 
-                    criterion = criterion.cuda()
-                    ref = ref.cuda()
-                    dist = dist.cuda()
-                    output = output.cuda()
+                        criterion = criterion.cuda()
+                        ref = ref.cuda()
+                        dist = dist.cuda()
+                        output = output.cuda()
 
-                    error = criterion(output, s)
-                    running_val_loss.append(error.item())
+                        error = criterion(output, s)
+                        running_val_loss.append(error.item())
 
-                print(
-                    "[%d, %5d] Training loss: %.5f\tValidation loss: %.5f"
-                    % (
-                        epoch + 1,
-                        i + 1,
-                        np.mean(running_loss),
-                        np.mean(running_val_loss),
+                    print(
+                        "[%d][%d, %5d] Training loss: %.5f\tValidation loss: %.5f"
+                        % (
+                            n,
+                            epoch + 1,
+                            i + 1,
+                            np.mean(running_loss),
+                            np.mean(running_val_loss),
+                        )
                     )
-                )
 
-                if len(validation_error) == 0:
-                    best = True
-                elif np.mean(running_val_loss) < min(validation_error):
-                    best = True
-                else:
-                    best = False
+                    if len(validation_error) == 0:
+                        best = True
+                    elif np.mean(running_val_loss) < min(validation_error):
+                        best = True
+                    else:
+                        best = False
 
-                train_error.append(np.mean(running_loss))
-                validation_error.append(np.mean(running_val_loss))
+                    train_error.append(np.mean(running_loss))
+                    validation_error.append(np.mean(running_val_loss))
 
-                saveChekpoint(
-                    epoch,
-                    net,
-                    optimizer,
-                    train_error,
-                    validation_error,
-                    opt.networks + str(i) + ".pth.tar",
-                    best,
-                    opt.network,
-                )
+                    saveChekpoint(
+                        epoch,
+                        net,
+                        optimizer,
+                        train_error,
+                        validation_error,
+                        opt.networks + str(i) + ".pth.tar",
+                        n,
+                        best,
+                        opt.network,
+                    )
 
-                running_loss = []
+                    running_loss = []
     print("Done!")
