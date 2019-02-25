@@ -24,12 +24,12 @@
    - Default:
 	LCC: 0.878841	SROCC: 0.872747 
    - MultiscaleDSP:
-	LCC: 0.776750	SROCC: 0.752614
+	LCC: 0.847266	SROCC: 0.837152
    1.6)Live - Fast Fading.
    - Default:
 	LCC: 0.922371	SROCC: 0.913561
    - MultiscaleDSP:
-	LCC: 0.795789	SROCC: 0.784650
+	LCC: 0.895993	SROCC: 0.911902
 
 2) EFFDI:
    2.1)Live - Full database.
