@@ -41,19 +41,20 @@ class RandomCrop(object):
 
 
 class GenDataset(nn.Module):
-    def __init__(self, dataroot, outputSize, batchSize=32, generate=False):
+    def __init__(self, dataroot, outputSize, run, batchSize=32, generate=False):
         super(GenDataset, self).__init__()
         self.eps = 1e-20
         self.dataroot = dataroot
         self.folders = ["refimgs/", "jp2k/", "jpeg/", "wn/", "gblur/", "fastfading/"]
         self.refImgs = glob(self.dataroot + self.folders[0] + "*.bmp")
+        self.run = run
         if generate == True:
             self.trainset, self.validationset, self.testset = self.genDataset()
         else:
             self.trainset, self.validationset, self.testset = (
-                pd.read_pickle(self.dataroot + "trainset.pkl"),
-                pd.read_pickle(self.dataroot + "validationset.pkl"),
-                pd.read_pickle(self.dataroot + "testset.pkl"),
+                pd.read_pickle(self.dataroot + str(self.run) + "_trainset.pkl"),
+                pd.read_pickle(self.dataroot + str(self.run) + "_validationset.pkl"),
+                pd.read_pickle(self.dataroot + str(self.run) + "_testset.pkl"),
             )
         self.outputSize = outputSize
         self.batchSize = batchSize
@@ -158,9 +159,11 @@ class GenDataset(nn.Module):
                 if df.iloc[i]["ref"] == img and df.iloc[i]["orgs"] == 0:
                     testset.append(i)
 
-        df.iloc[trainset].to_pickle(self.dataroot + "trainset.pkl")
-        df.iloc[validationset].to_pickle(self.dataroot + "validationset.pkl")
-        df.iloc[testset].to_pickle(self.dataroot + "testset.pkl")
+        df.iloc[trainset].to_pickle(self.dataroot + str(self.run) + "_trainset.pkl")
+        df.iloc[validationset].to_pickle(
+            self.dataroot + str(self.run) + "_validationset.pkl"
+        )
+        df.iloc[testset].to_pickle(self.dataroot + str(self.run) + "_testset.pkl")
 
         return df.iloc[trainset], df.iloc[validationset], df.iloc[testset]
 

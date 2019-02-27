@@ -63,3 +63,6 @@
    - MultiscaleDSP:
 	LCC: xxxxxxxx	SROCC: xxxxxxxx
 
+1.1) Runs: 	LCC:   0.884050, 0.876399, 
+		SROCC: 0.912744, 0.901965, 
+
