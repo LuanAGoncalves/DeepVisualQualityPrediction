@@ -129,7 +129,10 @@ if __name__ == "__main__":
         print("Done!")
 
     for n in range(start_run, 10):
-        dataloader = GenDataset(opt.dataroot, 32, n, opt.batchSize, generate=True)
+        if opt.network.lower() == "default":
+            dataloader = GenDataset(opt.dataroot, 32, n, opt.batchSize, generate=True)
+        elif opt.network.lower() == "multiscaledqp":
+            dataloader = GenDataset(opt.dataroot, 32, n, opt.batchSize, generate=False)
         train_error = []
         validation_error = []
         running_loss = []

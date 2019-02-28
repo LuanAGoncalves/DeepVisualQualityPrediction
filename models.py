@@ -291,7 +291,7 @@ class TransitionBlock3(nn.Module):
 
 class MultiscaleDQP(nn.Module):
     def __init__(self):
-        super(MultiscaleDSP, self).__init__()
+        super(MultiscaleDQP, self).__init__()
         self.dense0 = Dense_base_down0()
         self.dense1 = Dense_base_down1()
         self.dense2 = Dense_base_down2()
