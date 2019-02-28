@@ -6,7 +6,7 @@ import time
 from scipy.stats import pearsonr, spearmanr
 
 from GenDataset import GenDataset
-from models import MultiscaleDSP, Default
+from models import MultiscaleDQP, Default
 
 
 def sigmoid(paPSNR):
@@ -77,12 +77,12 @@ if __name__ == "__main__":
     parser.add_argument("--distType", type=int, default=None, help="Distortion type")
     opt = parser.parse_args()
 
-    dataloader = GenDataset(opt.dataroot, 32)
+    dataloader = GenDataset(opt.dataroot, 32, int(opt.model.split("_")[0]))
 
     if opt.network.lower() == "default":
         net = Default()
     elif opt.network.lower() == "multiscaledsp":
-        net = MultiscaleDSP()
+        net = MultiscaleDQP()
 
     net.load_state_dict(torch.load(opt.model)["state_dict"])
     net = net.eval()
