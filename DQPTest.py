@@ -81,7 +81,7 @@ if __name__ == "__main__":
 
     if opt.network.lower() == "default":
         net = Default()
-    elif opt.network.lower() == "multiscaledsp":
+    elif opt.network.lower() == "multiscaledqp":
         net = MultiscaleDQP()
 
     net.load_state_dict(torch.load(opt.model)["state_dict"])
