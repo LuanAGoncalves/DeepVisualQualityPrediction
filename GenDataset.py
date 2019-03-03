@@ -61,12 +61,12 @@ class GenDataset(nn.Module):
         self.crop = RandomCrop(output_size=32)
 
     def calcPSNR(self, ref, dist):
-        # ref = torch.tensor(
-        #     cv2.cvtColor(cv2.imread(ref), cv2.COLOR_BGR2GRAY), dtype=torch.float
-        # )
-        # dist = torch.tensor(
-        #     cv2.cvtColor(cv2.imread(dist), cv2.COLOR_BGR2GRAY), dtype=torch.float
-        # )
+        ref = torch.tensor(
+            cv2.cvtColor(cv2.imread(ref), cv2.COLOR_BGR2GRAY), dtype=torch.float
+        )
+        dist = torch.tensor(
+            cv2.cvtColor(cv2.imread(dist), cv2.COLOR_BGR2GRAY), dtype=torch.float
+        )
 
         mse = ((ref - dist) ** 2).mean()
 
@@ -121,7 +121,7 @@ class GenDataset(nn.Module):
         df["typeDist"] = typeDist
         df["dist"] = dists
         df["orgs"] = io.loadmat(self.dataroot + "dmos.mat")["orgs"].reshape(-1)
-        # df["psnr"] = [float(self.calcPSNR(x, y).numpy()) for x, y in zip(refs, dists)]
+        df["psnr"] = [float(self.calcPSNR(x, y).numpy()) for x, y in zip(refs, dists)]
         DMOS = io.loadmat(self.dataroot + "dmos_realigned.mat")["dmos_new"].reshape(-1)
         DMOS[DMOS[:] >= 100.0] = 99.9999
         DMOS[DMOS[:] <= 0.0] = 0.0001
@@ -129,13 +129,13 @@ class GenDataset(nn.Module):
         df["std"] = io.loadmat(self.dataroot + "dmos_realigned.mat")[
             "dmos_std"
         ].reshape(-1)
-        # df["sensitivity"] = [
-        #     self.sensitivity(
-        #         torch.tensor(psnr, dtype=torch.float),
-        #         torch.tensor(dmos, dtype=torch.float),
-        #     )
-        #     for psnr, dmos in zip(list(df["psnr"]), list(df["dmos"]))
-        # ]
+        df["sensitivity"] = [
+            self.sensitivity(
+                torch.tensor(psnr, dtype=torch.float),
+                torch.tensor(dmos, dtype=torch.float),
+            )
+            for psnr, dmos in zip(list(df["psnr"]), list(df["dmos"]))
+        ]
 
         trainset = []
         validationset = []
@@ -193,10 +193,8 @@ class GenDataset(nn.Module):
         return (
             refs,
             dists,
-            self.sensitivity(
-                self.calcPSNR(refs, dists),
-                batch["dmos"] * torch.ones(32, dtype=torch.float),
-            ),
+            batch["sensitivity"] * torch.ones(32, dtype=torch.float),
+            batch["dmos"] * torch.ones(32, dtype=torch.float),
         )
 
     def openBatchTest(self, batch):

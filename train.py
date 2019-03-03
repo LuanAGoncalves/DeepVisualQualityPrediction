@@ -151,6 +151,7 @@ if __name__ == "__main__":
                 optimizer.zero_grad()
 
                 output = net(ref)
+                output = output.view(-1)
 
                 criterion = criterion.cuda()
                 ref = ref.cuda()
@@ -175,6 +176,7 @@ if __name__ == "__main__":
                         s = s.cuda()
 
                         output = net(ref)
+                        output = output.view(-1)
 
                         criterion = criterion.cuda()
                         ref = ref.cuda()
