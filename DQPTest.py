@@ -10,7 +10,7 @@ from models import MultiscaleDQP, Default
 
 
 def sigmoid(paPSNR):
-    a, b, c = [96.16552146, 0.4231659, 0.17716917]
+    a, b, c = [100.0, 0.0, 0.17544356]
     return a + (b - a) / (1.0 + torch.exp(-c * paPSNR))
 
 
@@ -102,6 +102,7 @@ if __name__ == "__main__":
             input = PrPatcehs[j].view(-1, 1, 32, 32)
             input = input.cuda()
             s[j] = net(input)
+        print(s)
         papsnr = paPSNR(PrPatcehs, PdPatches, s)
         qpest = sigmoid(papsnr)
         QPest.append(qpest.detach().numpy())

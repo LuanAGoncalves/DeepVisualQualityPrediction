@@ -61,19 +61,19 @@ class GenDataset(nn.Module):
         self.crop = RandomCrop(output_size=32)
 
     def calcPSNR(self, ref, dist):
-        ref = torch.tensor(
-            cv2.cvtColor(cv2.imread(ref), cv2.COLOR_BGR2GRAY), dtype=torch.float
-        )
-        dist = torch.tensor(
-            cv2.cvtColor(cv2.imread(dist), cv2.COLOR_BGR2GRAY), dtype=torch.float
-        )
+        # ref = torch.tensor(
+        #     cv2.cvtColor(cv2.imread(ref), cv2.COLOR_BGR2GRAY), dtype=torch.float
+        # )
+        # dist = torch.tensor(
+        #     cv2.cvtColor(cv2.imread(dist), cv2.COLOR_BGR2GRAY), dtype=torch.float
+        # )
 
         mse = ((ref - dist) ** 2).mean()
 
         return 10 * torch.log10(255 ** 2 / mse)
 
     def sensitivity(self, psnr, dmos):
-        a, b, c = [96.16552146, 0.4231659, 0.17716917]
+        a, b, c = [100.0, 0.0, 0.17544356]
 
         s = torch.log(((b - a) / (dmos - a)) - 1) / c + psnr
 
@@ -121,21 +121,21 @@ class GenDataset(nn.Module):
         df["typeDist"] = typeDist
         df["dist"] = dists
         df["orgs"] = io.loadmat(self.dataroot + "dmos.mat")["orgs"].reshape(-1)
-        df["psnr"] = [float(self.calcPSNR(x, y).numpy()) for x, y in zip(refs, dists)]
+        # df["psnr"] = [float(self.calcPSNR(x, y).numpy()) for x, y in zip(refs, dists)]
         DMOS = io.loadmat(self.dataroot + "dmos_realigned.mat")["dmos_new"].reshape(-1)
-        DMOS[DMOS[:] >= 96.16552146] = 96.1654
-        DMOS[DMOS[:] <= 0.4231659] = 0.4232
+        DMOS[DMOS[:] >= 100.0] = 99.9999
+        DMOS[DMOS[:] <= 0.0] = 0.0001
         df["dmos"] = DMOS
         df["std"] = io.loadmat(self.dataroot + "dmos_realigned.mat")[
             "dmos_std"
         ].reshape(-1)
-        df["sensitivity"] = [
-            self.sensitivity(
-                torch.tensor(psnr, dtype=torch.float),
-                torch.tensor(dmos, dtype=torch.float),
-            )
-            for psnr, dmos in zip(list(df["psnr"]), list(df["dmos"]))
-        ]
+        # df["sensitivity"] = [
+        #     self.sensitivity(
+        #         torch.tensor(psnr, dtype=torch.float),
+        #         torch.tensor(dmos, dtype=torch.float),
+        #     )
+        #     for psnr, dmos in zip(list(df["psnr"]), list(df["dmos"]))
+        # ]
 
         trainset = []
         validationset = []
@@ -184,12 +184,19 @@ class GenDataset(nn.Module):
             RefPatches.append(img)
             DistPatches.append(dist)
 
+        refs = torch.tensor(RefPatches, dtype=torch.float).view(
+            self.batchSize, 1, 32, 32
+        )
+        dists = torch.tensor(DistPatches, dtype=torch.float).view(
+            self.batchSize, 1, 32, 32
+        )
         return (
-            torch.tensor(RefPatches, dtype=torch.float).view(self.batchSize, 1, 32, 32),
-            torch.tensor(DistPatches, dtype=torch.float).view(
-                self.batchSize, 1, 32, 32
+            refs,
+            dists,
+            self.sensitivity(
+                self.calcPSNR(refs, dists),
+                batch["dmos"] * torch.ones(32, dtype=torch.float),
             ),
-            batch["sensitivity"] * torch.ones(32, dtype=torch.float),
         )
 
     def openBatchTest(self, batch):
@@ -235,12 +242,12 @@ class GenDataset(nn.Module):
                 yield self.openBatchTest(dataset.iloc[i])
 
 
-def sigmoid(x, a, b, c, d):
-    return a + (b - a) / (1.0 + np.exp(-c * (x - d)))
+def sigmoid(x, c, d):
+    return 100.0 - 100.0 / (1.0 + np.exp(-c * (x - d)))
 
 
 if __name__ == "__main__":
-    dataset = GenDataset("./databaserelease2/", 32, 32)
+    dataset = GenDataset("./databaserelease2/", 32, 0, generate=True)
     trainset = dataset.trainset
     folders = dataset.folders
     ref = dataset.refImgs

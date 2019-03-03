@@ -47,7 +47,7 @@ def weights_init(m):
 
 
 def sensitivity(psnr, dmos):
-    a, b, c = [96.16552146, 0.4231659, 0.17716917]
+    a, b, c = [100.0, 0.0, 0.17544356]
 
     s = torch.log(((b - a) / (dmos - a)) - 1) / c + psnr
 
@@ -142,9 +142,7 @@ if __name__ == "__main__":
                 dataloader.iterate_minibatches(mode="train", shuffle=True)
             ):
                 net = net.train()
-                ref, dist, s = batch
-
-                psnr = torch.tensor(PSNR(ref, dist), dtype=torch.float)
+                ref, _, s = batch
 
                 ref = ref.cuda()
                 net = net.cuda()
@@ -156,7 +154,6 @@ if __name__ == "__main__":
 
                 criterion = criterion.cuda()
                 ref = ref.cuda()
-                dist = dist.cuda()
                 output = output.cuda()
 
                 error = criterion(output, s)
@@ -171,9 +168,7 @@ if __name__ == "__main__":
                         mode="validation", shuffle=True
                     ):
                         net = net.eval()
-                        ref, dist, s = batch
-
-                        psnr = torch.tensor(PSNR(ref, dist), dtype=torch.float)
+                        ref, _, s = batch
 
                         ref = ref.cuda()
                         net = net.cuda()
@@ -183,7 +178,6 @@ if __name__ == "__main__":
 
                         criterion = criterion.cuda()
                         ref = ref.cuda()
-                        dist = dist.cuda()
                         output = output.cuda()
 
                         error = criterion(output, s)
