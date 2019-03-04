@@ -190,12 +190,7 @@ class GenDataset(nn.Module):
         dists = torch.tensor(DistPatches, dtype=torch.float).view(
             self.batchSize, 1, 32, 32
         )
-        return (
-            refs,
-            dists,
-            batch["sensitivity"] * torch.ones(32, dtype=torch.float),
-            batch["dmos"] * torch.ones(32, dtype=torch.float),
-        )
+        return (refs, dists, batch["sensitivity"] * torch.ones(32, dtype=torch.float))
 
     def openBatchTest(self, batch):
         ref = batch["ref"]

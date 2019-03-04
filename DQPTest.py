@@ -19,7 +19,7 @@ def paPSNR(Pr, Pd, s):
     MSE = torch.zeros(n, 32, 32, dtype=torch.float)
 
     for i in range(n):
-        MSE[i] = 10 * torch.exp(s[i] / 10) * ((Pr[i] - Pd[i]) ** 2)
+        MSE[i] = 10 ** (s[i] / 10) * ((Pr[i] - Pd[i]) ** 2).mean()
 
     MSE[MSE[:] == 0.0] = 0.0000001
 
@@ -102,7 +102,7 @@ if __name__ == "__main__":
             input = PrPatcehs[j].view(-1, 1, 32, 32)
             input = input.cuda()
             s[j] = net(input)
-        print(s)
+        # print(s)
         papsnr = paPSNR(PrPatcehs, PdPatches, s)
         qpest = sigmoid(papsnr)
         QPest.append(qpest.detach().numpy())
