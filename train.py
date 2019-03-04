@@ -136,6 +136,7 @@ if __name__ == "__main__":
         train_error = []
         validation_error = []
         running_loss = []
+        net.apply(weights_init)
         print("# Starting training...")
         for epoch in range(start, opt.epochs):
             for i, batch in enumerate(
