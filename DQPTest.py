@@ -19,11 +19,13 @@ def paPSNR(Pr, Pd, s):
     MSE = torch.zeros(n, 32, 32, dtype=torch.float)
 
     for i in range(n):
-        MSE[i] = 10 ** (s[i] / 10) * ((Pr[i] - Pd[i]) ** 2).mean()
+        MSE[i] = (10.0 ** (s[i] / 10.0)) * ((Pr[i] - Pd[i]) ** 2)
 
     MSE[MSE[:] == 0.0] = 0.0000001
 
-    psnr = 10 * torch.log10(torch.tensor(255 ** 2, dtype=torch.float) / MSE.mean())
+    mse = (MSE.sum(dim=0) / n).mean()
+
+    psnr = 10 * torch.log10(torch.tensor(255 ** 2, dtype=torch.float) / mse)
 
     return psnr
 
@@ -95,6 +97,7 @@ if __name__ == "__main__":
     ):
         print("Image %d" % (i))
         ref, dist, dmos = batch
+        _, _, m, n = ref.shape
         PrPatcehs, PdPatches = extractPatches(ref, dist)
         s = torch.zeros(PrPatcehs.shape[0], dtype=torch.float)
         for j in range(PrPatcehs.shape[0]):

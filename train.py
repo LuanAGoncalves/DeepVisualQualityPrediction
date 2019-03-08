@@ -128,7 +128,7 @@ if __name__ == "__main__":
         start_run = checkpoint["run"]
         print("Done!")
 
-    for n in range(start_run, 10):
+    for n in range(start_run, 30):
         if opt.network.lower() == "default":
             dataloader = GenDataset(opt.dataroot, 32, n, opt.batchSize, generate=True)
         elif opt.network.lower() == "multiscaledqp":
@@ -137,6 +137,7 @@ if __name__ == "__main__":
         validation_error = []
         running_loss = []
         net.apply(weights_init)
+        optimizer = Adam(net.parameters(), opt.lr)
         print("# Starting training...")
         for epoch in range(start, opt.epochs):
             for i, batch in enumerate(
