@@ -241,7 +241,7 @@ def sigmoid(x, c, d):
 
 if __name__ == "__main__":
     dataset = GenDataset("./databaserelease2/", 32, 0, generate=True)
-    trainset = dataset.trainset
+    trainset = dataset.trainset[dataset.trainset["typeDist"] == "jpeg"]
     folders = dataset.folders
     ref = dataset.refImgs
 
@@ -262,15 +262,44 @@ if __name__ == "__main__":
             popt = pop
     print(popt)
 
-    plt.plot(
-        list(trainset["psnr"]),
-        [sigmoid(x, *popt) for x in trainset["psnr"]],
-        "*",
-        label="fit",
-    )
-    plt.plot(list(trainset["psnr"]), list(trainset["dmos"]), "o", label="data")
+    refs = glob("./databaserelease2/refimgs/*.bmp")
 
-    plt.xlabel("x")
-    plt.ylabel("y")
-    plt.legend()
+    ax = plt.subplot(111)
+
+    for ref in refs:
+        if (
+            list((trainset[trainset["ref"] == ref]).sort_values(by=["psnr"])["psnr"])
+            != []
+        ):
+            ax.plot(
+                list(
+                    (trainset[trainset["ref"] == ref]).sort_values(by=["psnr"])["psnr"]
+                ),
+                list(
+                    (trainset[trainset["ref"] == ref]).sort_values(by=["psnr"])["dmos"]
+                ),
+                "o-.",
+                label="fit",
+                linewidth=1,
+            )
+
+    auxPSNR = list(trainset["psnr"])
+    auxPSNR.sort()
+
+    ax.plot(
+        list(auxPSNR),
+        [sigmoid(x, *popt) for x in auxPSNR],
+        "-",
+        label="data",
+        linewidth=4,
+        color="black",
+    )
+    # Hide the right and top spines
+    ax.spines["right"].set_visible(False)
+    ax.spines["top"].set_visible(False)
+    # ax.grid()
+
+    plt.xlabel("PSNR")
+    plt.ylabel("DMOS")
+    # plt.legend()
     plt.show()
