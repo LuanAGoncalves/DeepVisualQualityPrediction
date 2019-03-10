@@ -378,7 +378,7 @@ class MultiscaleDQP(nn.Module):
         self.dense1 = Dense_base_down1()
         self.dense2 = Dense_base_down2()
 
-        self.conv1 = nn.Conv2d(6, 64, 3, 1, 1)
+        self.conv1 = nn.Conv2d(30, 64, 3, 1, 1)
         self.bn1 = nn.BatchNorm2d(64)
         self.bn2 = nn.BatchNorm2d(24)
         self.relu = nn.ReLU()
@@ -393,6 +393,8 @@ class MultiscaleDQP(nn.Module):
         x1 = self.dense0(x)
 
         output = torch.cat([x1, x2, x3], 1)
+
+        # print(x.shape, x1.shape, x2.shape, x3.shape, output.shape)
 
         output = self.relu(self.bn1(self.conv1(output)))
         output = self.relu(self.bn2(self.conv2(output)))
