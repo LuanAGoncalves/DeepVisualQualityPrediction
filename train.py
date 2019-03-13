@@ -8,6 +8,7 @@ import time
 
 from GenDataset import GenDataset
 from models import MultiscaleDQP, Default
+import Visualizations
 
 
 def saveChekpoint(
@@ -78,6 +79,9 @@ if __name__ == "__main__":
     )
     parser.add_argument("--model", required=False, default=None, help="Checkpoint")
     parser.add_argument(
+        "--visdom", type=bool, required=False, default=True, help="Use Visdom?"
+    )
+    parser.add_argument(
         "--generate", required=False, default=False, help="Generate dataset"
     )
     parser.add_argument(
@@ -128,7 +132,14 @@ if __name__ == "__main__":
         start_run = checkpoint["run"]
         print("Done!")
 
+    X = []
+    Y_train, Y_validation = [], []
+
     for n in range(start_run, 30):
+        count = 0
+        if opt.visdom == True:
+            plot = Visualizations.Plot("Model %d" % (n))
+            plot.register_line("Loss", "Epoch", "Loss")
         if opt.network.lower() == "default":
             dataloader = GenDataset(opt.dataroot, 32, n, opt.batchSize, generate=True)
         elif opt.network.lower() == "multiscaledqp":
@@ -166,6 +177,8 @@ if __name__ == "__main__":
                 running_loss.append(error.item())
 
                 if i % 30 == 29:
+                    count += 1
+                    X.append(count)
                     running_val_loss = []
                     for batch in dataloader.iterate_minibatches(
                         mode="validation", shuffle=True
@@ -207,6 +220,16 @@ if __name__ == "__main__":
 
                     train_error.append(np.mean(running_loss))
                     validation_error.append(np.mean(running_val_loss))
+
+                    Y_train.append(np.mean(running_loss))
+                    Y_validation.append(np.mean(running_val_loss))
+
+                    if opt.visdom == True:
+                        plot.update_line(
+                            "Loss",
+                            np.column_stack([X, X]),
+                            np.column_stack([Y_train, Y_validation]),
+                        )
 
                     saveChekpoint(
                         epoch,

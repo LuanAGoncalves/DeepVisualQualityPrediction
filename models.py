@@ -454,6 +454,7 @@ class Default(nn.Module):
             nn.Linear(512, 512),
             nn.BatchNorm1d(512),
             nn.ReLU(),
+            nn.Dropout(0.5),
             nn.Linear(512, 1),
             nn.ReLU(),
         )

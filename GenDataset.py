@@ -192,6 +192,36 @@ class GenDataset(nn.Module):
         )
         return (refs, dists, batch["sensitivity"] * torch.ones(32, dtype=torch.float))
 
+    def openBatchValidation(self, batch, cutPoint):
+        ref = batch["ref"]
+        dist = batch["dist"]
+        RefImgs = []
+        DistImgs = []
+
+        RefImg = np.array(cv2.cvtColor(cv2.imread(ref), cv2.COLOR_RGB2GRAY), np.float32)
+        DistImg = np.array(
+            cv2.cvtColor(cv2.imread(dist), cv2.COLOR_RGB2GRAY), np.float32
+        )
+        for i in range(32):
+            RefImgs.append(
+                RefImg[
+                    cutPoint[i, 0] : cutPoint[i, 0] + 32,
+                    cutPoint[i, 1] : cutPoint[i, 1] + 32,
+                ]
+            )
+            DistImgs.append(
+                DistImg[
+                    cutPoint[i, 0] : cutPoint[i, 0] + 32,
+                    cutPoint[i, 1] : cutPoint[i, 1] + 32,
+                ]
+            )
+
+        return (
+            torch.tensor(RefImgs, dtype=torch.float).view(32, 1, 32, 32),
+            torch.tensor(DistImgs, dtype=torch.float).view(32, 1, 32, 32),
+            batch["dmos"] * torch.ones(32, dtype=torch.float),
+        )
+
     def openBatchTest(self, batch):
         ref = batch["ref"]
         dist = batch["dist"]
@@ -209,6 +239,26 @@ class GenDataset(nn.Module):
             batch["dmos"],
         )
 
+    def cutPoints(self, dataset):
+        points = []
+        refs = list(dataset["ref"])
+
+        n = len(refs)
+
+        for i in range(n):
+            RefImg = np.array(
+                cv2.cvtColor(cv2.imread(refs[i]), cv2.COLOR_RGB2GRAY), np.float32
+            )
+            h, w = RefImg.shape
+            auxList = []
+            for j in range(32):
+                top = np.random.randint(0, h - 32)
+                left = np.random.randint(0, w - 32)
+                auxList.append([top, left])
+            points.append(auxList)
+
+        return np.array(points)
+
     def iterate_minibatches(
         self, batchsize=1, mode="train", distortion=None, shuffle=False
     ):
@@ -217,6 +267,7 @@ class GenDataset(nn.Module):
             dataset = self.trainset
         elif mode.lower() == "validation":
             dataset = self.validationset
+            points = self.cutPoints(dataset)
         elif mode.lower() == "test":
             dataset = self.testset
 
@@ -225,12 +276,15 @@ class GenDataset(nn.Module):
         else:
             dataset = dataset[dataset["typeDist"] == distTypes[distortion]]
 
-        if mode.lower() != "test":
+        if mode.lower() == "train":
             if shuffle:
                 dataset = dataset.sample(frac=1).reset_index(drop=True)
             for i in range(len(dataset)):
                 yield self.openBatch(dataset.iloc[i])
-        else:
+        elif mode.lower() == "validation":
+            for i in range(len(dataset)):
+                yield self.openBatchValidation(dataset.iloc[i], points[i])
+        elif mode.lower() == "test":
             for i in range(len(dataset)):
                 yield self.openBatchTest(dataset.iloc[i])
 
