@@ -137,6 +137,8 @@ if __name__ == "__main__":
 
     for n in range(start_run, 30):
         count = 0
+        X = []
+        Y_train, Y_validation = [], []
         if opt.visdom == True:
             plot = Visualizations.Plot("Model %d" % (n))
             plot.register_line("Loss", "Epoch", "Loss")
