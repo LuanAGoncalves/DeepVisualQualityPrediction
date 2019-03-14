@@ -219,7 +219,7 @@ class GenDataset(nn.Module):
         return (
             torch.tensor(RefImgs, dtype=torch.float).view(32, 1, 32, 32),
             torch.tensor(DistImgs, dtype=torch.float).view(32, 1, 32, 32),
-            batch["dmos"] * torch.ones(32, dtype=torch.float),
+            batch["sensitivity"] * torch.ones(32, dtype=torch.float),
         )
 
     def openBatchTest(self, batch):
