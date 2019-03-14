@@ -41,32 +41,32 @@ def saveChekpoint(
 def weights_init(m):
     classname = m.__class__.__name__
     if classname.find("Conv") != -1:
-        torch.nn.init.normal_(m.weight.data, 0.0, 0.02)
+        torch.nn.init.normal_(m.weight.data, 0.0, 1.0)
     elif classname.find("BatchNorm") != -1:
-        torch.nn.init.normal_(m.weight.data, 1.0, 0.02)
+        torch.nn.init.normal_(m.weight.data, 1.0, 1.0)
         torch.nn.init.constant_(m.bias.data, 0)
 
 
-def sensitivity(psnr, dmos):
-    a, b, c = [100.0, 0.0, 0.17544356]
+# def sensitivity(psnr, dmos):
+#     a, b, c = [100.0, 0.0, 0.17544356]
 
-    s = torch.log(((b - a) / (dmos - a)) - 1) / c + psnr
+#     s = torch.log(((b - a) / (dmos - a)) - 1) / c + psnr
 
-    return s
+#     return s
 
 
-def PSNR(Pr, Pd):
-    n = Pr.shape[0]
-    MSE = torch.zeros(n, dtype=torch.float)
+# def PSNR(Pr, Pd):
+#     n = Pr.shape[0]
+#     MSE = torch.zeros(n, dtype=torch.float)
 
-    for i in range(n):
-        MSE[i] = ((Pr[i] - Pd[i]) ** 2).mean()
+#     for i in range(n):
+#         MSE[i] = ((Pr[i] - Pd[i]) ** 2).mean()
 
-    MSE[MSE[:] == 0.0] = 0.0000001
+#     MSE[MSE[:] == 0.0] = 0.0000001
 
-    psnr = 10 * torch.log10(torch.tensor(255 ** 2, dtype=torch.float) / MSE)
+#     psnr = 10 * torch.log10(torch.tensor(255 ** 2, dtype=torch.float) / MSE)
 
-    return psnr
+#     return psnr
 
 
 if __name__ == "__main__":
@@ -78,9 +78,7 @@ if __name__ == "__main__":
         help="path to trn dataset",
     )
     parser.add_argument("--model", required=False, default=None, help="Checkpoint")
-    parser.add_argument(
-        "--visdom", type=bool, required=False, default=True, help="Use Visdom?"
-    )
+    parser.add_argument("--visdom", required=False, default="True", help="Use Visdom?")
     parser.add_argument(
         "--generate", required=False, default=False, help="Generate dataset"
     )
@@ -139,7 +137,7 @@ if __name__ == "__main__":
         count = 0
         X = []
         Y_train, Y_validation = [], []
-        if opt.visdom == True:
+        if opt.visdom.lower() == "true":
             plot = Visualizations.Plot("Model %d" % (n))
             plot.register_line("Loss", "Epoch", "Loss")
         if opt.network.lower() == "default":
@@ -226,7 +224,7 @@ if __name__ == "__main__":
                     Y_train.append(np.mean(running_loss))
                     Y_validation.append(np.mean(running_val_loss))
 
-                    if opt.visdom == True:
+                    if opt.visdom.lower() == "true":
                         plot.update_line(
                             "Loss",
                             np.column_stack([X, X]),
