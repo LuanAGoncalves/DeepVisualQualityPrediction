@@ -394,8 +394,6 @@ class MultiscaleDQP(nn.Module):
 
         output = torch.cat([x1, x2, x3], 1)
 
-        # print(x.shape, x1.shape, x2.shape, x3.shape, output.shape)
-
         output = self.relu(self.bn1(self.conv1(output)))
         output = self.relu(self.bn2(self.conv2(output)))
 

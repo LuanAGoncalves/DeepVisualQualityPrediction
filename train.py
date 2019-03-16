@@ -41,32 +41,10 @@ def saveChekpoint(
 def weights_init(m):
     classname = m.__class__.__name__
     if classname.find("Conv") != -1:
-        torch.nn.init.normal_(m.weight.data, 0.0, 1.0)
+        m.weight.data = torch.nn.init.kaiming_normal(m.weight.data)
     elif classname.find("BatchNorm") != -1:
-        torch.nn.init.normal_(m.weight.data, 1.0, 1.0)
-        torch.nn.init.constant_(m.bias.data, 0)
-
-
-# def sensitivity(psnr, dmos):
-#     a, b, c = [100.0, 0.0, 0.17544356]
-
-#     s = torch.log(((b - a) / (dmos - a)) - 1) / c + psnr
-
-#     return s
-
-
-# def PSNR(Pr, Pd):
-#     n = Pr.shape[0]
-#     MSE = torch.zeros(n, dtype=torch.float)
-
-#     for i in range(n):
-#         MSE[i] = ((Pr[i] - Pd[i]) ** 2).mean()
-
-#     MSE[MSE[:] == 0.0] = 0.0000001
-
-#     psnr = 10 * torch.log10(torch.tensor(255 ** 2, dtype=torch.float) / MSE)
-
-#     return psnr
+        m.weight.data = torch.nn.init.normal_(m.weight.data, 0.0, 1.0)
+        m.bias.data = torch.nn.init.constant_(m.bias.data, 0)
 
 
 if __name__ == "__main__":
@@ -95,7 +73,7 @@ if __name__ == "__main__":
         "--epochs", type=int, default=150, help="Number of epochs to train the model"
     )
     parser.add_argument("--batchSize", type=int, default=32, help="batch size")
-    parser.add_argument("--lr", type=float, default=0.1, help="learning rate")
+    parser.add_argument("--lr", type=float, default=0.001, help="learning rate")
     opt = parser.parse_args()
 
     if os.path.isdir(opt.networks):
