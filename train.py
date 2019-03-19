@@ -56,6 +56,9 @@ if __name__ == "__main__":
         help="path to trn dataset",
     )
     parser.add_argument("--model", required=False, default=None, help="Checkpoint")
+    parser.add_argument(
+        "--input", required=False, default="reference", help="Reference or Distorted?"
+    )
     parser.add_argument("--visdom", required=False, default="True", help="Use Visdom?")
     parser.add_argument(
         "--generate", required=False, default=False, help="Generate dataset"
@@ -133,7 +136,10 @@ if __name__ == "__main__":
                 dataloader.iterate_minibatches(mode="train", shuffle=True)
             ):
                 net = net.train()
-                ref, _, s = batch
+                if opt.input.lower() == "reference":
+                    ref, _, s = batch
+                elif opt.input.lower() == "distorted":
+                    _, ref, s = batch
 
                 ref = ref.cuda()
                 net = net.cuda()
@@ -162,7 +168,10 @@ if __name__ == "__main__":
                         mode="validation", shuffle=True
                     ):
                         net = net.eval()
-                        ref, _, s = batch
+                        if opt.input.lower() == "reference":
+                            ref, _, s = batch
+                        elif opt.input.lower() == "distorted":
+                            _, ref, s = batch
 
                         ref = ref.cuda()
                         net = net.cuda()

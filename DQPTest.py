@@ -74,6 +74,9 @@ if __name__ == "__main__":
         "--model", type=str, required=False, default=None, help="Checkpoint"
     )
     parser.add_argument(
+        "--input", required=False, default="reference", help="Reference or Distorted?"
+    )
+    parser.add_argument(
         "--network", required=False, default="Default", help="Default of MultiscaleDSP?"
     )
     parser.add_argument("--distType", type=int, default=None, help="Distortion type")
@@ -98,15 +101,18 @@ if __name__ == "__main__":
         print("Image %d" % (i))
         ref, dist, dmos = batch
         _, _, m, n = ref.shape
-        PrPatcehs, PdPatches = extractPatches(ref, dist)
-        s = torch.zeros(PrPatcehs.shape[0], dtype=torch.float)
-        for j in range(PrPatcehs.shape[0]):
+        PrPatches, PdPatches = extractPatches(ref, dist)
+        s = torch.zeros(PrPatches.shape[0], dtype=torch.float)
+        for j in range(PrPatches.shape[0]):
             net = net.cuda()
-            input = PrPatcehs[j].view(-1, 1, 32, 32)
+            if opt.input.lower() == "reference":
+                input = PrPatches[j].view(-1, 1, 32, 32)
+            elif opt.input.lower() == "distorted":
+                input = PdPatches[j].view(-1, 1, 32, 32)
             input = input.cuda()
             s[j] = net(input)
         # print(s)
-        papsnr = paPSNR(PrPatcehs, PdPatches, s)
+        papsnr = paPSNR(PrPatches, PdPatches, s)
         qpest = sigmoid(papsnr)
         QPest.append(qpest.detach().numpy())
         QP.append(dmos)
