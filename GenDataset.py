@@ -68,7 +68,12 @@ class GenDataset(nn.Module):
             cv2.cvtColor(cv2.imread(dist), cv2.COLOR_BGR2GRAY), dtype=torch.float
         )
 
-        mse = ((ref - dist) ** 2).mean()
+        mse = ((ref - dist) ** 2).mean() + 1e-18
+
+        return 10 * torch.log10(255 ** 2 / mse)
+
+    def calcPatchPSNR(self, ref, dist):
+        mse = ((ref - dist) ** 2).mean() + 1e-18
 
         return 10 * torch.log10(255 ** 2 / mse)
 
@@ -129,13 +134,13 @@ class GenDataset(nn.Module):
         df["std"] = io.loadmat(self.dataroot + "dmos_realigned.mat")[
             "dmos_std"
         ].reshape(-1)
-        df["sensitivity"] = [
-            self.sensitivity(
-                torch.tensor(psnr, dtype=torch.float),
-                torch.tensor(dmos, dtype=torch.float),
-            )
-            for psnr, dmos in zip(list(df["psnr"]), list(df["dmos"]))
-        ]
+        # df["sensitivity"] = [
+        #     self.sensitivity(
+        #         torch.tensor(psnr, dtype=torch.float),
+        #         torch.tensor(dmos, dtype=torch.float),
+        #     )
+        #     for psnr, dmos in zip(list(df["psnr"]), list(df["dmos"]))
+        # ]
 
         trainset = []
         validationset = []
@@ -190,7 +195,17 @@ class GenDataset(nn.Module):
         dists = torch.tensor(DistPatches, dtype=torch.float).view(
             self.batchSize, 1, 32, 32
         )
-        return (refs, dists, batch["sensitivity"] * torch.ones(32, dtype=torch.float))
+
+        psnr = torch.tensor(
+            [self.calcPatchPSNR(x, y) for x, y in zip(refs, dists)], dtype=torch.float
+        )
+        dmos = torch.tensor(np.array(batch["dmos"]) * np.ones((32)), dtype=torch.float)
+
+        batchSensitivity = torch.tensor(
+            [self.sensitivity(x, y) for x, y in zip(psnr, dmos)], dtype=torch.float
+        )
+
+        return (refs, dists, batchSensitivity)
 
     def openBatchValidation(self, batch, cutPoint):
         ref = batch["ref"]
@@ -216,11 +231,18 @@ class GenDataset(nn.Module):
                 ]
             )
 
-        return (
-            torch.tensor(RefImgs, dtype=torch.float).view(32, 1, 32, 32),
-            torch.tensor(DistImgs, dtype=torch.float).view(32, 1, 32, 32),
-            batch["sensitivity"] * torch.ones(32, dtype=torch.float),
+        refs = torch.tensor(RefImgs, dtype=torch.float).view(32, 1, 32, 32)
+        dists = torch.tensor(DistImgs, dtype=torch.float).view(32, 1, 32, 32)
+
+        psnr = torch.tensor(
+            [self.calcPatchPSNR(x, y) for x, y in zip(refs, dists)], dtype=torch.float
         )
+        dmos = torch.tensor(np.array(batch["dmos"]) * np.ones((32)), dtype=torch.float)
+        batchSensitivity = torch.tensor(
+            [self.sensitivity(x, y) for x, y in zip(psnr, dmos)], dtype=torch.float
+        )
+
+        return (refs, dists, batchSensitivity)
 
     def openBatchTest(self, batch):
         ref = batch["ref"]

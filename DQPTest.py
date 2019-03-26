@@ -21,7 +21,7 @@ def paPSNR(Pr, Pd, s):
     for i in range(n):
         MSE[i] = (10.0 ** (s[i] / 10.0)) * ((Pr[i] - Pd[i]) ** 2)
 
-    MSE[MSE[:] == 0.0] = 0.0000001
+    MSE[MSE[:] == 0.0] = 1e-18
 
     mse = (MSE.sum(dim=0) / n).mean()
 
