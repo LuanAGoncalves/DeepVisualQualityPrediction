@@ -26,18 +26,18 @@ class RandomCrop(object):
             assert len(output_size) == 2
             self.output_size = output_size
 
-    def __call__(self, image, groundTruth):
-        h, w = image.shape[:2]
+    def __call__(self, ref, dist):
+        h, w = ref.shape[:2]
         new_h, new_w = self.output_size
 
         top = np.random.randint(0, h - new_h)
         left = np.random.randint(0, w - new_w)
 
-        image = image[top : top + new_h, left : left + new_w]
+        ref = ref[top : top + new_h, left : left + new_w]
 
-        groundTruth = groundTruth[top : top + new_h, left : left + new_w]
+        dist = dist[top : top + new_h, left : left + new_w]
 
-        return image, groundTruth
+        return ref, dist
 
 
 class GenDataset(nn.Module):

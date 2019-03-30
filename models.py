@@ -379,6 +379,7 @@ class MultiscaleDQP(nn.Module):
         self.dense2 = Dense_base_down2()
 
         self.conv1 = nn.Conv2d(30, 64, 3, 1, 1)
+        self.bn0 = nn.BatchNorm2d(1)
         self.bn1 = nn.BatchNorm2d(64)
         self.bn2 = nn.BatchNorm2d(24)
         self.relu = nn.ReLU()
@@ -388,9 +389,9 @@ class MultiscaleDQP(nn.Module):
         self.fc2 = nn.Linear(512, 1)
 
     def forward(self, x):
-        x3 = self.dense2(x)
-        x2 = self.dense1(x)
-        x1 = self.dense0(x)
+        x3 = self.dense2(self.bn0(x))
+        x2 = self.dense1(self.bn0(x))
+        x1 = self.dense0(self.bn0(x))
 
         output = torch.cat([x1, x2, x3], 1)
 

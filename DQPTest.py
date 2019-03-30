@@ -23,7 +23,7 @@ def paPSNR(Pr, Pd, s):
 
     MSE[MSE[:] == 0.0] = 1e-18
 
-    mse = (MSE.sum(dim=0) / n).mean()
+    mse = MSE.view(-1).mean()
 
     psnr = 10 * torch.log10(torch.tensor(255 ** 2, dtype=torch.float) / mse)
 
