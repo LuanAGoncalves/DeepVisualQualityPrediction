@@ -19,7 +19,7 @@ def paPSNR(Pr, Pd, s):
     MSE = torch.zeros(n, 32, 32, dtype=torch.float)
 
     for i in range(n):
-        MSE[i] = (10.0 ** (s[i] / 10.0)) * ((Pr[i] - Pd[i]) ** 2)
+        MSE[i] = torch.pow(10.0, s[i] / 10.0) * (torch.pow((Pr[i] - Pd[i]),2))
 
     MSE[MSE[:] == 0.0] = 1e-18
 
