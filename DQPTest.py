@@ -19,11 +19,12 @@ def paPSNR(Pr, Pd, s):
     MSE = torch.zeros(n, 32, 32, dtype=torch.float)
 
     for i in range(n):
-        MSE[i] = torch.pow(10.0, s[i] / 10.0) * (torch.pow((Pr[i] - Pd[i]),2))
-
-    MSE[MSE[:] == 0.0] = 1e-18
+        MSE[i] = torch.pow(10.0, s[i] / 10.0) * (torch.pow((Pr[i] - Pd[i]), 2))
 
     mse = MSE.view(-1).mean()
+
+    if mse == 0.0:
+        mse = 1e-28
 
     psnr = 10 * torch.log10(torch.tensor(255 ** 2, dtype=torch.float) / mse)
 
