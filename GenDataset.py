@@ -217,7 +217,7 @@ class GenDataset(nn.Module):
         DistImg = np.array(
             cv2.cvtColor(cv2.imread(dist), cv2.COLOR_RGB2GRAY), np.float32
         )
-        for i in range(2):
+        for i in range(32):
             RefImgs.append(
                 RefImg[
                     cutPoint[i, 0] : cutPoint[i, 0] + 32,
@@ -231,8 +231,8 @@ class GenDataset(nn.Module):
                 ]
             )
 
-        refs = torch.tensor(RefImgs, dtype=torch.float).view(2, 1, 32, 32)
-        dists = torch.tensor(DistImgs, dtype=torch.float).view(2, 1, 32, 32)
+        refs = torch.tensor(RefImgs, dtype=torch.float).view(32, 1, 32, 32)
+        dists = torch.tensor(DistImgs, dtype=torch.float).view(32, 1, 32, 32)
 
         psnr = torch.tensor(
             [self.calcPatchPSNR(x, y) for x, y in zip(refs, dists)], dtype=torch.float
