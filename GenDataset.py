@@ -78,7 +78,7 @@ class GenDataset(nn.Module):
         return 10 * torch.log10(255 ** 2 / mse)
 
     def sensitivity(self, psnr, dmos):
-        a, b, c = [100.0, 0.0, 0.17544356]
+        a, b, c = [100.0, 0.0, 0.21713241]
 
         s = torch.log(((b - a) / (dmos - a)) - 1) / c + psnr
 
@@ -128,8 +128,12 @@ class GenDataset(nn.Module):
         df["orgs"] = io.loadmat(self.dataroot + "dmos.mat")["orgs"].reshape(-1)
         df["psnr"] = [float(self.calcPSNR(x, y).numpy()) for x, y in zip(refs, dists)]
         DMOS = io.loadmat(self.dataroot + "dmos_realigned.mat")["dmos_new"].reshape(-1)
-        DMOS[DMOS[:] >= 100.0] = 99.9999
-        DMOS[DMOS[:] <= 0.0] = 0.0001
+        DMOS_min, DMOS_max = min(DMOS), max(DMOS)
+        DMOS = (
+            ((DMOS - DMOS_min) / (DMOS_max - DMOS_min)) * (100.0 - 2 * 0.0001)
+        ) + 0.0001
+        # DMOS[DMOS[:] >= 100.0] = 99.9999
+        # DMOS[DMOS[:] <= 0.0] = 0.0001
         df["dmos"] = DMOS
         df["std"] = io.loadmat(self.dataroot + "dmos_realigned.mat")[
             "dmos_std"

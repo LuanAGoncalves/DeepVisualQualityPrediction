@@ -10,7 +10,7 @@ from models import MultiscaleDQP, Default
 
 
 def sigmoid(paPSNR):
-    a, b, c = [100.0, 0.0, 0.17544356]
+    a, b, c = [100.0, 0.0, 0.21713241]
     return a + (b - a) / (1.0 + torch.exp(-c * paPSNR))
 
 
