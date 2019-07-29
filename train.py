@@ -77,7 +77,7 @@ if __name__ == "__main__":
         help="path to store the generated models",
     )
     parser.add_argument(
-        "--epochs", type=int, default=150, help="Number of epochs to train the model"
+        "--epochs", type=int, default=10, help="Number of epochs to train the model"
     )
     parser.add_argument("--batchSize", type=int, default=32, help="batch size")
     parser.add_argument("--lr", type=float, default=0.001, help="learning rate")
@@ -117,6 +117,8 @@ if __name__ == "__main__":
 
     X = []
     Y_train, Y_validation = [], []
+
+    torch.manual_seed(100)
 
     for n in range(start_run, 30):
         count = 0
