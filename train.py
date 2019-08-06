@@ -122,6 +122,8 @@ if __name__ == "__main__":
     X = []
     Y_train, Y_validation = [], []
 
+    torch.manual_seed(100)
+
     for n in range(start_run, 30):
         count = 0
         X = []
