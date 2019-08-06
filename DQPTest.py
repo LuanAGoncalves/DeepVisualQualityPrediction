@@ -6,7 +6,7 @@ import time
 from scipy.stats import pearsonr, spearmanr
 
 from GenDataset import GenDataset
-from models import MultiscaleDQP, Default
+from models import DenseDQP, Default
 
 
 def sigmoid(paPSNR):
@@ -15,7 +15,12 @@ def sigmoid(paPSNR):
 
 
 def paPSNR(Pr, Pd, s):
-    return 10 * torch.log10(255 ** 2 / (10.**(s/10.).unsqueeze(1).unsqueeze(1) * (Pr - Pd)**2).view(32,-1).mean())
+    return 10 * torch.log10(
+        255 ** 2
+        / (10.0 ** (s / 10.0).unsqueeze(1).unsqueeze(1) * (Pr - Pd) ** 2)
+        .view(32, -1)
+        .mean()
+    )
 
 
 def extractPatches(Pr, Pd):
@@ -74,8 +79,8 @@ if __name__ == "__main__":
 
     if opt.network.lower() == "default":
         net = Default()
-    elif opt.network.lower() == "multiscaledqp":
-        net = MultiscaleDQP()
+    elif opt.network.lower() == "densedqp":
+        net = DenseDQP()
 
     net.load_state_dict(torch.load(opt.model)["state_dict"])
     net = net.eval()
@@ -87,7 +92,7 @@ if __name__ == "__main__":
         dataloader.iterate_minibatches(mode="test", distortion=opt.distType)
     ):
         print("Image %d" % (i))
-        ref, dist, dmos = batch
+        ref, dist, typeDist, dmos = batch
         _, _, m, n = ref.shape
         PrPatches, PdPatches = extractPatches(ref, dist)
         s = torch.zeros(PrPatches.shape[0], dtype=torch.float)
