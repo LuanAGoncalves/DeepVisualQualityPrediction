@@ -7,7 +7,7 @@ import shutil
 import time
 
 from GenDataset import GenDataset
-from models import MultiscaleDQP, Default
+from models import DenseDQP, Default
 import Visualizations
 
 
@@ -68,7 +68,7 @@ if __name__ == "__main__":
         "--generate", required=False, default=False, help="Generate dataset"
     )
     parser.add_argument(
-        "--network", required=False, default="Default", help="Default of MultiscaleDQP?"
+        "--network", required=False, default="Default", help="Default of DenseDQP?"
     )
     parser.add_argument(
         "--networks",
@@ -77,7 +77,7 @@ if __name__ == "__main__":
         help="path to store the generated models",
     )
     parser.add_argument(
-        "--epochs", type=int, default=150, help="Number of epochs to train the model"
+        "--epochs", type=int, default=10, help="Number of epochs to train the model"
     )
     parser.add_argument("--batchSize", type=int, default=32, help="batch size")
     parser.add_argument("--lr", type=float, default=0.001, help="learning rate")
@@ -92,14 +92,18 @@ if __name__ == "__main__":
 
     if opt.network.lower() == "default":
         net = Default()
-    elif opt.network.lower() == "multiscaledqp":
-        net = MultiscaleDQP()
+    elif opt.network.lower() == "densedqp":
+        net = DenseDQP()
     net.apply(weights_init)
 
     criterion = torch.nn.L1Loss()
     optimizer = Adam(net.parameters(), opt.lr)
 
     start_run = 0
+    torch.manual_seed(0)
+    np.random.seed(0)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 
     if opt.model == None:
         start = 0
@@ -127,7 +131,7 @@ if __name__ == "__main__":
             plot.register_line("Loss", "Epoch", "Loss")
         if opt.network.lower() == "default":
             dataloader = GenDataset(opt.dataroot, 32, n, opt.batchSize, generate=True)
-        elif opt.network.lower() == "multiscaledqp":
+        elif opt.network.lower() == "densedqp":
             dataloader = GenDataset(opt.dataroot, 32, n, opt.batchSize, generate=False)
         train_error = []
         validation_error = []

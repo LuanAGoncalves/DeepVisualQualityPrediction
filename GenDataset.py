@@ -25,6 +25,7 @@ class RandomCrop(object):
         else:
             assert len(output_size) == 2
             self.output_size = output_size
+        np.random.seed(0)
 
     def __call__(self, ref, dist):
         h, w = ref.shape[:2]
@@ -262,6 +263,7 @@ class GenDataset(nn.Module):
         return (
             torch.tensor(RefImg, dtype=torch.float).view(1, 1, h, w),
             torch.tensor(DistImg, dtype=torch.float).view(1, 1, h, w),
+            batch["typeDist"],
             batch["dmos"],
         )
 
