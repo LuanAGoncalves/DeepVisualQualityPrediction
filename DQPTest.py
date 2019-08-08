@@ -71,7 +71,7 @@ if __name__ == "__main__":
         "--input", required=False, default="reference", help="Reference or Distorted?"
     )
     parser.add_argument(
-        "--network", required=False, default="Default", help="Default of MultiscaleDSP?"
+        "--network", required=False, default="Default", help="Default of DenseDQP?"
     )
     parser.add_argument("--distType", type=int, default=None, help="Distortion type")
     opt = parser.parse_args()
@@ -87,7 +87,9 @@ if __name__ == "__main__":
         elif opt.network.lower() == "densedqp":
             net = DenseDQP()
 
-        dataloader = GenDataset(opt.dataroot, 32, int(model.split("/")[-1].split("_")[0]))
+        dataloader = GenDataset(
+            opt.dataroot, 32, int(model.split("/")[-1].split("_")[0])
+        )
 
         net.load_state_dict(torch.load(model)["state_dict"])
         net = net.eval()
@@ -128,7 +130,4 @@ if __name__ == "__main__":
     LCC = np.array(LCC)
     SROCC = np.array(SROCC)
 
-    print(
-    "LCC = %f\tSROCC = %f"
-    % (LCC.mean(), SROCC.mean())
-    )
+    print("LCC = %f\tSROCC = %f" % (LCC.mean(), SROCC.mean()))
