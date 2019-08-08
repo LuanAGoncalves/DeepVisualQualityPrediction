@@ -76,10 +76,10 @@ if __name__ == "__main__":
     parser.add_argument("--distType", type=int, default=None, help="Distortion type")
     opt = parser.parse_args()
 
-    dataloader = GenDataset(opt.dataroot, 32, int(opt.model.split("_")[0]))
-
     LCC = []
     SROCC = []
+
+    count = 0
 
     for model in glob(opt.folder + "*.pth.tar"):
         if opt.network.lower() == "default":
@@ -87,16 +87,17 @@ if __name__ == "__main__":
         elif opt.network.lower() == "densedqp":
             net = DenseDQP()
 
+        dataloader = GenDataset(opt.dataroot, 32, int(model.split("/")[-1].split("_")[0]))
+
         net.load_state_dict(torch.load(model)["state_dict"])
         net = net.eval()
 
         QP, QPest = [], []
 
-        print("# Starting testing...")
+        print("# Testing model %d" % (count))
         for i, batch in enumerate(
             dataloader.iterate_minibatches(mode="test", distortion=opt.distType)
         ):
-            print("Image %d" % (i))
             ref, dist, typeDist, dmos = batch
             _, _, m, n = ref.shape
             PrPatches, PdPatches = extractPatches(ref, dist)
@@ -122,11 +123,12 @@ if __name__ == "__main__":
 
         LCC.append(lcc[0])
         SROCC.append(srocc[0])
+        count += 1
 
     LCC = np.array(LCC)
     SROCC = np.array(SROCC)
 
     print(
     "LCC = %f\tSROCC = %f"
-    % (LCC, SROCC)
+    % (LCC.mean(), SROCC.mean())
     )
