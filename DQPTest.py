@@ -1,6 +1,7 @@
 import torch
 import argparse
 import os
+from glob import glob
 import numpy as np
 import time
 from scipy.stats import pearsonr, spearmanr
@@ -64,7 +65,7 @@ if __name__ == "__main__":
         help="path to trn dataset",
     )
     parser.add_argument(
-        "--model", type=str, required=False, default=None, help="Checkpoint"
+        "--folder", type=str, required=False, default=None, help="Models folder"
     )
     parser.add_argument(
         "--input", required=False, default="reference", help="Reference or Distorted?"
@@ -77,48 +78,55 @@ if __name__ == "__main__":
 
     dataloader = GenDataset(opt.dataroot, 32, int(opt.model.split("_")[0]))
 
-    if opt.network.lower() == "default":
-        net = Default()
-    elif opt.network.lower() == "densedqp":
-        net = DenseDQP()
+    LCC = []
+    SROCC = []
 
-    net.load_state_dict(torch.load(opt.model)["state_dict"])
-    net = net.eval()
+    for model in glob(opt.folder + "*.pth.tar"):
+        if opt.network.lower() == "default":
+            net = Default()
+        elif opt.network.lower() == "densedqp":
+            net = DenseDQP()
 
-    QP, QPest = [], []
+        net.load_state_dict(torch.load(model)["state_dict"])
+        net = net.eval()
 
-    print("# Starting testing...")
-    for i, batch in enumerate(
-        dataloader.iterate_minibatches(mode="test", distortion=opt.distType)
-    ):
-        print("Image %d" % (i))
-        ref, dist, typeDist, dmos = batch
-        _, _, m, n = ref.shape
-        PrPatches, PdPatches = extractPatches(ref, dist)
-        s = torch.zeros(PrPatches.shape[0], dtype=torch.float)
-        for j in range(PrPatches.shape[0]):
-            net = net.cuda()
-            if opt.input.lower() == "reference":
-                input = PrPatches[j].view(-1, 1, 32, 32)
-            elif opt.input.lower() == "distorted":
-                input = PdPatches[j].view(-1, 1, 32, 32)
-            input = input.cuda()
-            s[j] = net(input)
-        # print(s)
-        papsnr = paPSNR(PrPatches, PdPatches, s)
-        qpest = sigmoid(papsnr)
-        QPest.append(qpest.detach().numpy())
-        QP.append(dmos)
+        QP, QPest = [], []
 
-    QP = np.array(QP).tolist()
-    QPest = np.array(QPest).tolist()
+        print("# Starting testing...")
+        for i, batch in enumerate(
+            dataloader.iterate_minibatches(mode="test", distortion=opt.distType)
+        ):
+            print("Image %d" % (i))
+            ref, dist, typeDist, dmos = batch
+            _, _, m, n = ref.shape
+            PrPatches, PdPatches = extractPatches(ref, dist)
+            s = torch.zeros(PrPatches.shape[0], dtype=torch.float)
+            for j in range(PrPatches.shape[0]):
+                net = net.cuda()
+                if opt.input.lower() == "reference":
+                    input = PrPatches[j].view(-1, 1, 32, 32)
+                elif opt.input.lower() == "distorted":
+                    input = PdPatches[j].view(-1, 1, 32, 32)
+                input = input.cuda()
+                s[j] = net(input)
+            papsnr = paPSNR(PrPatches, PdPatches, s)
+            qpest = sigmoid(papsnr)
+            QPest.append(qpest.detach().numpy())
+            QP.append(dmos)
 
-    lcc = pearsonr(QP, QPest)
-    srocc = spearmanr(QP, QPest)
+        QP = np.array(QP).tolist()
+        QPest = np.array(QPest).tolist()
+
+        lcc = pearsonr(QP, QPest)
+        srocc = spearmanr(QP, QPest)
+
+        LCC.append(lcc[0])
+        SROCC.append(srocc[0])
+
+    LCC = np.array(LCC)
+    SROCC = np.array(SROCC)
 
     print(
-        "LCC = %f\tpvalue = %f\nSROCC = %f\tpvalue = %f"
-        % (lcc[0], lcc[1], srocc[0], srocc[1])
+    "LCC = %f\tSROCC = %f"
+    % (LCC, SROCC)
     )
-
-    print("Done!")
