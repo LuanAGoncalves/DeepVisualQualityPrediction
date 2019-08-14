@@ -16,12 +16,20 @@ def sigmoid(paPSNR):
 
 
 def paPSNR(Pr, Pd, s):
-    return 10 * torch.log10(
-        255 ** 2
-        / (10.0 ** (s / 10.0).unsqueeze(1).unsqueeze(1) * (Pr - Pd) ** 2)
-        .view(32, -1)
-        .mean()
-    )
+    n = Pr.shape[0]
+    MSE = torch.zeros(n, 32, 32, dtype=torch.float)
+
+    for i in range(n):
+        MSE[i] = torch.pow(10.0, s[i] / 10.0) * (torch.pow((Pr[i] - Pd[i]), 2))
+
+    mse = MSE.view(-1).mean()
+
+    if mse == 0.0:
+        mse = 1e-28
+
+    psnr = 10 * torch.log10(torch.tensor(255 ** 2, dtype=torch.float) / mse)
+
+    return psnr
 
 
 def extractPatches(Pr, Pd):
