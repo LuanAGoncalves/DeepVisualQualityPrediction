@@ -7,7 +7,7 @@ import shutil
 import time
 
 from GenDataset import GenDataset
-from models import DenseDQP, Default
+from models import DenseDQP, Default, MultiscaleDQP
 import Visualizations
 
 
@@ -94,6 +94,8 @@ if __name__ == "__main__":
         net = Default()
     elif opt.network.lower() == "densedqp":
         net = DenseDQP()
+    elif opt.network.lower() == "multiscaledqp":
+        net = MultiscaleDQP()
     net.apply(weights_init)
 
     criterion = torch.nn.L1Loss()
@@ -135,6 +137,8 @@ if __name__ == "__main__":
             dataloader = GenDataset(opt.dataroot, 32, n, opt.batchSize, generate=True)
         elif opt.network.lower() == "densedqp":
             dataloader = GenDataset(opt.dataroot, 32, n, opt.batchSize, generate=False)
+        elif opt.network.lower() == "multiscaledqp":
+            dataloader = GenDataset(opt.dataroot, 32, n, opt.batchSize, generate=False)    
         train_error = []
         validation_error = []
         running_loss = []

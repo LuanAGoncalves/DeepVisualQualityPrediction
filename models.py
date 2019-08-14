@@ -407,6 +407,109 @@ class DenseDQP(nn.Module):
 
         return output
 
+# class DenseDQP(nn.Module):
+#     def __init__(self):
+#         super(DenseDQP, self).__init__()
+#         self.dense0 = Dense_base_down0()
+#         self.dense1 = Dense_base_down1()
+#         self.dense2 = Dense_base_down2()
+
+#         self.conv1 = nn.Conv2d(30, 32, 3, 1, 1)
+#         self.bn0 = nn.BatchNorm2d(1)
+#         self.bn1 = nn.BatchNorm2d(32)
+#         self.bn2 = nn.BatchNorm2d(24)
+#         self.relu = nn.ReLU()
+#         self.conv2 = nn.Conv2d(32, 24, 3, 1, 1)
+#         self.fc1 = nn.Linear(24576, 128)
+#         self.bnfc = nn.BatchNorm1d(128)
+#         self.fc2 = nn.Linear(128, 1)
+
+#     def forward(self, x):
+#         x3 = self.dense2(self.bn0(x))
+#         x2 = self.dense1(self.bn0(x))
+#         x1 = self.dense0(self.bn0(x))
+
+#         output = torch.cat([x1, x2, x3], 1)
+
+#         output = self.relu(self.bn1(self.conv1(output)))
+#         output = self.relu(self.bn2(self.conv2(output)))
+
+#         n, c, h, w = output.shape
+
+#         output = output.view(n, c * h * w)
+
+#         output = self.relu(self.bnfc(self.fc1(output)))
+#         output = self.relu(self.fc2(output))
+
+#         return output
+
+class Dilatated(nn.Module):
+    def __init__(self):
+        super(Dilatated, self).__init__()
+        self.stream1 = nn.Sequential(
+            nn.BatchNorm2d(32),
+            nn.Conv2d(32, 10, 3, 1, 1, 1),
+            nn.BatchNorm2d(10),
+            nn.ReLU(),
+            nn.Conv2d(10, 10, 3, 1, 1, 1),
+            nn.BatchNorm2d(10),
+            nn.ReLU(),
+        )
+        self.stream2 = nn.Sequential(
+            nn.BatchNorm2d(32),
+            nn.Conv2d(32, 10, 3, 1, 2, 2),
+            nn.BatchNorm2d(10),
+            nn.ReLU(),
+            nn.Conv2d(10, 10, 3, 1, 2, 2),
+            nn.BatchNorm2d(10),
+            nn.ReLU(),
+        )
+        self.stream3 = nn.Sequential(
+            nn.BatchNorm2d(32),
+            nn.Conv2d(32, 10, 3, 1, 3, 3),
+            nn.BatchNorm2d(10),
+            nn.ReLU(),
+            nn.Conv2d(10, 10, 3, 1, 3, 3),
+            nn.BatchNorm2d(10),
+            nn.ReLU(),
+        )
+
+    def forward(self, x):
+        output1 = self.stream1(x)
+        output2 = self.stream2(x)
+        output3 = self.stream3(x)
+
+        return torch.cat([output1,output2,output3], 1)
+
+class MultiscaleDQP(nn.Module):
+    def __init__(self):
+        super(MultiscaleDQP, self).__init__()
+        self.conv = nn.Conv2d(1, 32, 3, 1, 1)
+        self.dilatated = Dilatated()
+        self.conv1 = nn.Conv2d(30, 32, 3, 1, 1)
+        self.bn0 = nn.BatchNorm2d(1)
+        self.bn1 = nn.BatchNorm2d(32)
+        self.bn2 = nn.BatchNorm2d(24)
+        self.relu = nn.ReLU()
+        self.conv2 = nn.Conv2d(32, 24, 3, 1, 1)
+        self.fc1 = nn.Linear(24576, 128)
+        self.bnfc = nn.BatchNorm1d(128)
+        self.fc2 = nn.Linear(128, 1)
+    
+    def forward(self, x):
+        output = self.conv(x)
+        output = self.dilatated(output)
+        output = self.relu(self.bn1(self.conv1(output)))
+        output = self.relu(self.bn2(self.conv2(output)))
+
+        n, c, h, w = output.shape
+
+        output = output.view(n, c * h * w)
+
+        output = self.relu(self.bnfc(self.fc1(output)))
+        output = self.relu(self.fc2(output))
+
+        return output
 
 class Default(nn.Module):
     def __init__(self):

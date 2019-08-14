@@ -7,7 +7,7 @@ import time
 from scipy.stats import pearsonr, spearmanr
 
 from GenDataset import GenDataset
-from models import DenseDQP, Default
+from models import DenseDQP, Default, MultiscaleDQP
 
 
 def sigmoid(paPSNR):
@@ -94,6 +94,8 @@ if __name__ == "__main__":
             net = Default()
         elif opt.network.lower() == "densedqp":
             net = DenseDQP()
+        elif opt.network.lower() == "multiscaledqp":
+            net = MultiscaleDQP()
 
         dataloader = GenDataset(
             opt.dataroot, 32, int(model.split("/")[-1].split("_")[0])
