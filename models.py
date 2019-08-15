@@ -407,9 +407,9 @@ class DenseDQP(nn.Module):
 
         return output
 
-# class DenseDQP(nn.Module):
+# class MultiscaleDQP(nn.Module):
 #     def __init__(self):
-#         super(DenseDQP, self).__init__()
+#         super(MultiscaleDQP, self).__init__()
 #         self.dense0 = Dense_base_down0()
 #         self.dense1 = Dense_base_down1()
 #         self.dense2 = Dense_base_down2()
