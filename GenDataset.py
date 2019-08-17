@@ -99,27 +99,27 @@ class GenDataset(nn.Module):
                 dists.append(
                     self.dataroot + self.folders[1] + "img" + str(i + 1) + ".bmp"
                 )
-                typeDist.append(self.folders[1].split("/")[0])
+                typeDist.append(0)
             elif i >= 227 and i < 460:
                 dists.append(
                     self.dataroot + self.folders[2] + "img" + str(i - 227 + 1) + ".bmp"
                 )
-                typeDist.append(self.folders[2].split("/")[0])
+                typeDist.append(1)
             elif i >= 460 and i < 634:
                 dists.append(
                     self.dataroot + self.folders[3] + "img" + str(i - 460 + 1) + ".bmp"
                 )
-                typeDist.append(self.folders[3].split("/")[0])
+                typeDist.append(2)
             elif i >= 634 and i < 808:
                 dists.append(
                     self.dataroot + self.folders[4] + "img" + str(i - 634 + 1) + ".bmp"
                 )
-                typeDist.append(self.folders[4].split("/")[0])
+                typeDist.append(3)
             elif i >= 808:
                 dists.append(
                     self.dataroot + self.folders[5] + "img" + str(i - 808 + 1) + ".bmp"
                 )
-                typeDist.append(self.folders[5].split("/")[0])
+                typeDist.append(4)
 
         df = pd.DataFrame(columns=["ref", "dist"])
 
@@ -133,19 +133,10 @@ class GenDataset(nn.Module):
         DMOS = (
             ((DMOS - DMOS_min) / (DMOS_max - DMOS_min)) * (100.0 - 2 * 0.0001)
         ) + 0.0001
-        # DMOS[DMOS[:] >= 100.0] = 99.9999
-        # DMOS[DMOS[:] <= 0.0] = 0.0001
         df["dmos"] = DMOS
         df["std"] = io.loadmat(self.dataroot + "dmos_realigned.mat")[
             "dmos_std"
         ].reshape(-1)
-        # df["sensitivity"] = [
-        #     self.sensitivity(
-        #         torch.tensor(psnr, dtype=torch.float),
-        #         torch.tensor(dmos, dtype=torch.float),
-        #     )
-        #     for psnr, dmos in zip(list(df["psnr"]), list(df["dmos"]))
-        # ]
 
         trainset = []
         validationset = []
@@ -204,13 +195,14 @@ class GenDataset(nn.Module):
         psnr = torch.tensor(
             [self.calcPatchPSNR(x, y) for x, y in zip(refs, dists)], dtype=torch.float
         )
+        typeDist = torch.tensor(np.array(batch["typeDist"]), dtype=torch.float)
         dmos = torch.tensor(np.array(batch["dmos"]) * np.ones((32)), dtype=torch.float)
 
         batchSensitivity = torch.tensor(
             [self.sensitivity(x, y) for x, y in zip(psnr, dmos)], dtype=torch.float
         )
 
-        return (refs, dists, batchSensitivity)
+        return (refs, dists, typeDist, batchSensitivity)
 
     def openBatchValidation(self, batch, cutPoint):
         ref = batch["ref"]
@@ -242,12 +234,13 @@ class GenDataset(nn.Module):
         psnr = torch.tensor(
             [self.calcPatchPSNR(x, y) for x, y in zip(refs, dists)], dtype=torch.float
         )
+        typeDist = torch.tensor(np.array(batch["typeDist"]), dtype=torch.float)
         dmos = torch.tensor(np.array(batch["dmos"]) * np.ones((32)), dtype=torch.float)
         batchSensitivity = torch.tensor(
             [self.sensitivity(x, y) for x, y in zip(psnr, dmos)], dtype=torch.float
         )
 
-        return (refs, dists, batchSensitivity)
+        return (refs, dists, typeDist, batchSensitivity)
 
     def openBatchTest(self, batch):
         ref = batch["ref"]

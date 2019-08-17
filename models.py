@@ -370,6 +370,26 @@ class Dense_base_down2(nn.Module):
 
         return x6
 
+class ScaleFactor(nn.Module):
+    def __init__(self):
+        super(ScaleFactor, self).__init__()
+        self.jp2k = nn.Parameter(torch.rand(1))
+        self.jpeg = nn.Parameter(torch.rand(1))
+        self.wn = nn.Parameter(torch.rand(1))
+        self.gblur = nn.Parameter(torch.rand(1))
+        self.fastfading = nn.Parameter(torch.rand(1))
+
+    def forward(self, x, distType):
+        if distType == 0:
+            return self.jp2k*x
+        elif distType == 1:
+            return self.jpeg*x
+        elif distType == 2:
+            return self.wn*x
+        elif distType == 3:
+            return self.gblur*x
+        elif distType == 4:
+            return self.fastfading*x
 
 class DenseDQP(nn.Module):
     def __init__(self):
@@ -560,16 +580,16 @@ class Default(nn.Module):
             nn.Linear(512, 1),
             nn.ReLU(),
         )
+        self.scale_factor = ScaleFactor()
 
-    def forward(self, x):
+    def forward(self, x, distType):
         output = self.features(x)
         n, c, _, _ = output.shape
         output = output.view(n, c)
         output = self.regressor(output)
-        return output
-
+        return self.scale_factor(output, distType)
 
 if __name__ == "__main__":
     x = torch.rand(32, 1, 32, 32)
     net = Default()
-    print(net(x))
+    print(net(x, 0))

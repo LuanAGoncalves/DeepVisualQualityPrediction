@@ -121,7 +121,7 @@ if __name__ == "__main__":
                 elif opt.input.lower() == "distorted":
                     input = PdPatches[j].view(-1, 1, 32, 32)
                 input = input.cuda()
-                s[j] = net(input)
+                s[j] = net(input, typeDist)
             papsnr = paPSNR(PrPatches, PdPatches, s)
             qpest = sigmoid(papsnr)
             QPest.append(qpest.detach().numpy())

@@ -151,17 +151,18 @@ if __name__ == "__main__":
             ):
                 net = net.train()
                 if opt.input.lower() == "reference":
-                    ref, _, s = batch
+                    ref, _, typeDist, s = batch
                 elif opt.input.lower() == "distorted":
-                    _, ref, s = batch
+                    _, ref, typeDist, s = batch
 
                 ref = ref.cuda()
                 net = net.cuda()
                 s = s.cuda()
+                typeDist = typeDist.cuda()
 
                 optimizer.zero_grad()
 
-                output = net(ref)
+                output = net(ref, typeDist)
                 output = output.view(-1)
 
                 criterion = criterion.cuda()
@@ -183,15 +184,16 @@ if __name__ == "__main__":
                     ):
                         net = net.eval()
                         if opt.input.lower() == "reference":
-                            ref, _, s = batch
+                            ref, _, typeDist, s = batch
                         elif opt.input.lower() == "distorted":
-                            _, ref, s = batch
+                            _, ref, typeDist, s = batch
 
                         ref = ref.cuda()
                         net = net.cuda()
                         s = s.cuda()
+                        typeDist = typeDist.cuda()
 
-                        output = net(ref)
+                        output = net(ref, typeDist)
                         output = output.view(-1)
 
                         criterion = criterion.cuda()
