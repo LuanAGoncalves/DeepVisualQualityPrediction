@@ -77,7 +77,7 @@ if __name__ == "__main__":
         help="path to store the generated models",
     )
     parser.add_argument(
-        "--epochs", type=int, default=10, help="Number of epochs to train the model"
+        "--epochs", type=int, default=50, help="Number of epochs to train the model"
     )
     parser.add_argument("--batchSize", type=int, default=32, help="batch size")
     parser.add_argument("--lr", type=float, default=0.001, help="learning rate")
@@ -90,16 +90,16 @@ if __name__ == "__main__":
         os.mkdir(opt.networks)
         print("Done!")
 
-    if opt.network.lower() == "default":
-        net = Default()
-    elif opt.network.lower() == "densedqp":
-        net = DenseDQP()
-    elif opt.network.lower() == "multiscaledqp":
-        net = MultiscaleDQP()
-    net.apply(weights_init)
+    # if opt.network.lower() == "default":
+    #     net = Default()
+    # elif opt.network.lower() == "densedqp":
+    #     net = DenseDQP()
+    # elif opt.network.lower() == "multiscaledqp":
+    #     net = MultiscaleDQP()
+    # net.apply(weights_init)
 
     criterion = torch.nn.L1Loss()
-    optimizer = Adam(net.parameters(), opt.lr)
+    # optimizer = Adam(net.parameters(), opt.lr)
 
     start_run = 0
     torch.manual_seed(0)
@@ -135,10 +135,13 @@ if __name__ == "__main__":
             plot.register_line("Loss", "Epoch", "Loss")
         if opt.network.lower() == "default":
             dataloader = GenDataset(opt.dataroot, 32, n, opt.batchSize, generate=True)
+            net = Default()
         elif opt.network.lower() == "densedqp":
             dataloader = GenDataset(opt.dataroot, 32, n, opt.batchSize, generate=False)
+            net = DenseDQP()
         elif opt.network.lower() == "multiscaledqp":
             dataloader = GenDataset(opt.dataroot, 32, n, opt.batchSize, generate=False)    
+            net = MultiscaleDQP()
         train_error = []
         validation_error = []
         running_loss = []
