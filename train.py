@@ -63,7 +63,10 @@ if __name__ == "__main__":
     parser.add_argument(
         "--input", required=False, default="reference", help="Reference or Distorted?"
     )
-    parser.add_argument("--visdom", required=False, default="True", help="Use Visdom?")
+    parser.add_argument("--visdom", required=False, default=1, help="Use Visdom?")
+    parser.add_argument(
+        "--scale_factor", type=int, required=False, default=0, help="Use scale factor?"
+    )
     parser.add_argument(
         "--generate", required=False, default=False, help="Generate dataset"
     )
@@ -80,7 +83,7 @@ if __name__ == "__main__":
         "--epochs", type=int, default=50, help="Number of epochs to train the model"
     )
     parser.add_argument("--batchSize", type=int, default=32, help="batch size")
-    parser.add_argument("--lr", type=float, default=0.001, help="learning rate")
+    parser.add_argument("--lr", type=float, default=0.0001, help="learning rate")
     opt = parser.parse_args()
 
     if os.path.isdir(opt.networks):
@@ -90,16 +93,7 @@ if __name__ == "__main__":
         os.mkdir(opt.networks)
         print("Done!")
 
-    # if opt.network.lower() == "default":
-    #     net = Default()
-    # elif opt.network.lower() == "densedqp":
-    #     net = DenseDQP()
-    # elif opt.network.lower() == "multiscaledqp":
-    #     net = MultiscaleDQP()
-    # net.apply(weights_init)
-
     criterion = torch.nn.L1Loss()
-    # optimizer = Adam(net.parameters(), opt.lr)
 
     start_run = 0
     torch.manual_seed(0)
@@ -107,19 +101,7 @@ if __name__ == "__main__":
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
-    if opt.model == None:
-        start = 0
-    else:
-        print("Loading checkpoint...")
-        checkpoint = torch.load(opt.model)
-        net = net.cuda()
-        net.load_state_dict(checkpoint["state_dict"])
-        start = checkpoint["epoch"]
-        optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
-        train_error = checkpoint["train_loss"]
-        validation_error = checkpoint["val_loss"]
-        start_run = checkpoint["run"]
-        print("Done!")
+    start = 0
 
     X = []
     Y_train, Y_validation = [], []
@@ -130,18 +112,18 @@ if __name__ == "__main__":
         count = 0
         X = []
         Y_train, Y_validation = [], []
-        if opt.visdom.lower() == "true":
+        if opt.visdom == 1:
             plot = Visualizations.Plot("Model %d" % (n))
             plot.register_line("Loss", "Epoch", "Loss")
         if opt.network.lower() == "default":
             dataloader = GenDataset(opt.dataroot, 32, n, opt.batchSize, generate=True)
-            net = Default()
+            net = Default(opt.scale_factor)
         elif opt.network.lower() == "densedqp":
             dataloader = GenDataset(opt.dataroot, 32, n, opt.batchSize, generate=False)
-            net = DenseDQP()
+            net = DenseDQP(opt.scale_factor)
         elif opt.network.lower() == "multiscaledqp":
-            dataloader = GenDataset(opt.dataroot, 32, n, opt.batchSize, generate=False)    
-            net = MultiscaleDQP()
+            dataloader = GenDataset(opt.dataroot, 32, n, opt.batchSize, generate=False)
+            net = MultiscaleDQP(opt.scale_factor)
         train_error = []
         validation_error = []
         running_loss = []
@@ -230,7 +212,7 @@ if __name__ == "__main__":
                     Y_train.append(np.mean(running_loss))
                     Y_validation.append(np.mean(running_val_loss))
 
-                    if opt.visdom.lower() == "true":
+                    if opt.visdom == 1:
                         plot.update_line(
                             "Loss",
                             np.column_stack([X, X]),

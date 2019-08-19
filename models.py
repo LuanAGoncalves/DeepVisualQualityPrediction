@@ -370,6 +370,7 @@ class Dense_base_down2(nn.Module):
 
         return x6
 
+
 class ScaleFactor(nn.Module):
     def __init__(self):
         super(ScaleFactor, self).__init__()
@@ -381,19 +382,21 @@ class ScaleFactor(nn.Module):
 
     def forward(self, x, distType):
         if distType == 0:
-            return self.jp2k*x
+            return self.jp2k * x
         elif distType == 1:
-            return self.jpeg*x
+            return self.jpeg * x
         elif distType == 2:
-            return self.wn*x
+            return self.wn * x
         elif distType == 3:
-            return self.gblur*x
+            return self.gblur * x
         elif distType == 4:
-            return self.fastfading*x
+            return self.fastfading * x
+
 
 class DenseDQP(nn.Module):
-    def __init__(self):
+    def __init__(self, scale_factor_flag=0):
         super(DenseDQP, self).__init__()
+        self.scale_factor_flag = scale_factor_flag
         self.dense0 = Dense_base_down0()
         # self.dense1 = Dense_base_down1()
         # self.dense2 = Dense_base_down2()
@@ -407,8 +410,9 @@ class DenseDQP(nn.Module):
         self.fc1 = nn.Linear(24576, 128)
         self.bnfc = nn.BatchNorm1d(128)
         self.fc2 = nn.Linear(128, 1)
+        self.scale_factor = ScaleFactor()
 
-    def forward(self, x):
+    def forward(self, x, distType=None):
         # x3 = self.dense2(self.bn0(x))
         # x2 = self.dense1(self.bn0(x))
         x1 = self.dense0(self.bn0(x))
@@ -424,8 +428,11 @@ class DenseDQP(nn.Module):
 
         output = self.relu(self.bnfc(self.fc1(output)))
         output = self.relu(self.fc2(output))
+        if self.scale_factor_flag == 1:
+            return self.scale_factor(output, distType)
+        else:
+            return output
 
-        return output
 
 # class MultiscaleDQP(nn.Module):
 #     def __init__(self):
@@ -463,6 +470,7 @@ class DenseDQP(nn.Module):
 
 #         return output
 
+
 class Dilatated(nn.Module):
     def __init__(self):
         super(Dilatated, self).__init__()
@@ -499,11 +507,13 @@ class Dilatated(nn.Module):
         output2 = self.stream2(x)
         output3 = self.stream3(x)
 
-        return torch.cat([output1,output2,output3], 1)
+        return torch.cat([output1, output2, output3], 1)
+
 
 class MultiscaleDQP(nn.Module):
-    def __init__(self):
+    def __init__(self, scale_factor_flag=0):
         super(MultiscaleDQP, self).__init__()
+        self.scale_factor_flag = scale_factor_flag
         self.conv = nn.Conv2d(1, 32, 3, 1, 1)
         self.dilatated = Dilatated()
         self.conv1 = nn.Conv2d(30, 32, 3, 1, 1)
@@ -515,8 +525,10 @@ class MultiscaleDQP(nn.Module):
         self.fc1 = nn.Linear(24576, 128)
         self.bnfc = nn.BatchNorm1d(128)
         self.fc2 = nn.Linear(128, 1)
-    
-    def forward(self, x):
+
+        self.scale_factor = ScaleFactor()
+
+    def forward(self, x, distType=None):
         output = self.conv(x)
         output = self.dilatated(output)
         output = self.relu(self.bn1(self.conv1(output)))
@@ -528,12 +540,16 @@ class MultiscaleDQP(nn.Module):
 
         output = self.relu(self.bnfc(self.fc1(output)))
         output = self.relu(self.fc2(output))
+        if self.scale_factor_flag == 1:
+            return self.scale_factor(output, distType)
+        else:
+            return output
 
-        return output
 
 class Default(nn.Module):
-    def __init__(self):
+    def __init__(self, scale_factor_flag=0):
         super(Default, self).__init__()
+        self.scale_factor_flag = scale_factor_flag
         self.features = nn.Sequential(
             nn.BatchNorm2d(1),
             nn.Conv2d(1, 32, 3, 1, 1),
@@ -582,14 +598,19 @@ class Default(nn.Module):
         )
         self.scale_factor = ScaleFactor()
 
-    def forward(self, x, distType):
+    def forward(self, x, distType=None):
         output = self.features(x)
         n, c, _, _ = output.shape
         output = output.view(n, c)
         output = self.regressor(output)
-        return self.scale_factor(output, distType)
+        if self.scale_factor_flag == 1:
+            return self.scale_factor(output, distType)
+        else:
+            return output
+
 
 if __name__ == "__main__":
     x = torch.rand(32, 1, 32, 32)
-    net = Default()
-    print(net(x, 0))
+    net = MultiscaleDQP(1)
+    print(net(x, 3))
+

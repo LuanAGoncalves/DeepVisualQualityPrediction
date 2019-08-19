@@ -81,6 +81,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--network", required=False, default="Default", help="Default of DenseDQP?"
     )
+    parser.add_argument(
+        "--scale_factor", type=int, required=False, default=0, help="Use scale factor?"
+    )
     parser.add_argument("--distType", type=int, default=None, help="Distortion type")
     opt = parser.parse_args()
 
@@ -91,11 +94,11 @@ if __name__ == "__main__":
 
     for model in glob(opt.folder + "*.pth.tar"):
         if opt.network.lower() == "default":
-            net = Default()
+            net = Default(opt.scale_factor)
         elif opt.network.lower() == "densedqp":
-            net = DenseDQP()
+            net = DenseDQP(opt.scale_factor)
         elif opt.network.lower() == "multiscaledqp":
-            net = MultiscaleDQP()
+            net = MultiscaleDQP(opt.scale_factor)
 
         dataloader = GenDataset(
             opt.dataroot, 32, int(model.split("/")[-1].split("_")[0])
