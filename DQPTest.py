@@ -99,6 +99,8 @@ if __name__ == "__main__":
             net = DenseDQP(opt.scale_factor)
         elif opt.network.lower() == "multiscaledqp":
             net = MultiscaleDQP(opt.scale_factor)
+        elif opt.network.lower() == "multiscaleqp":
+            net = MultiscaleDQP(opt.scale_factor)
 
         dataloader = GenDataset(
             opt.dataroot, 32, int(model.split("/")[-1].split("_")[0])

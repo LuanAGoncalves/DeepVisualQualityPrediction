@@ -7,7 +7,7 @@ import shutil
 import time
 
 from GenDataset import GenDataset
-from models import DenseDQP, Default, MultiscaleDQP
+from models import DenseDQP, Default, MultiscaleDQP, MultiscaleQP
 import Visualizations
 
 
@@ -112,7 +112,7 @@ if __name__ == "__main__":
         Y_train, Y_validation = [], []
         if opt.visdom == 1:
             plot = Visualizations.Plot("Model %d" % (n))
-            plot.register_line("Loss", "Epoch", "Loss")
+            plot.register_line("Loss", "Iteration", "Loss")
         if opt.network.lower() == "default":
             dataloader = GenDataset(opt.dataroot, 32, n, opt.batchSize, generate=True)
             net = Default(opt.scale_factor)
@@ -122,6 +122,9 @@ if __name__ == "__main__":
         elif opt.network.lower() == "multiscaledqp":
             dataloader = GenDataset(opt.dataroot, 32, n, opt.batchSize, generate=False)
             net = MultiscaleDQP(opt.scale_factor)
+        elif opt.network.lower() == "multiscaleqp":
+            dataloader = GenDataset(opt.dataroot, 32, n, opt.batchSize, generate=False)
+            net = MultiscaleQP(opt.scale_factor)
         train_error = []
         validation_error = []
         running_loss = []

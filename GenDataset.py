@@ -61,18 +61,6 @@ class GenDataset(nn.Module):
         self.batchSize = batchSize
         self.crop = RandomCrop(output_size=32)
 
-    def calcPSNR(self, ref, dist):
-        ref = torch.tensor(
-            cv2.cvtColor(cv2.imread(ref), cv2.COLOR_BGR2GRAY), dtype=torch.float
-        )
-        dist = torch.tensor(
-            cv2.cvtColor(cv2.imread(dist), cv2.COLOR_BGR2GRAY), dtype=torch.float
-        )
-
-        mse = ((ref - dist) ** 2).mean() + 1e-18
-
-        return 10 * torch.log10(255 ** 2 / mse)
-
     def calcPatchPSNR(self, ref, dist):
         mse = ((ref - dist) ** 2).mean() + 1e-18
 
@@ -127,16 +115,12 @@ class GenDataset(nn.Module):
         df["typeDist"] = typeDist
         df["dist"] = dists
         df["orgs"] = io.loadmat(self.dataroot + "dmos.mat")["orgs"].reshape(-1)
-        df["psnr"] = [float(self.calcPSNR(x, y).numpy()) for x, y in zip(refs, dists)]
         DMOS = io.loadmat(self.dataroot + "dmos_realigned.mat")["dmos_new"].reshape(-1)
         DMOS_min, DMOS_max = min(DMOS), max(DMOS)
         DMOS = (
             ((DMOS - DMOS_min) / (DMOS_max - DMOS_min)) * (100.0 - 2 * 0.0001)
         ) + 0.0001
         df["dmos"] = DMOS
-        df["std"] = io.loadmat(self.dataroot + "dmos_realigned.mat")[
-            "dmos_std"
-        ].reshape(-1)
 
         trainset = []
         validationset = []

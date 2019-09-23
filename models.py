@@ -434,41 +434,41 @@ class DenseDQP(nn.Module):
             return output
 
 
-# class MultiscaleDQP(nn.Module):
-#     def __init__(self):
-#         super(MultiscaleDQP, self).__init__()
-#         self.dense0 = Dense_base_down0()
-#         self.dense1 = Dense_base_down1()
-#         self.dense2 = Dense_base_down2()
+class MultiscaleDQP(nn.Module):
+    def __init__(self):
+        super(MultiscaleDQP, self).__init__()
+        self.dense0 = Dense_base_down0()
+        self.dense1 = Dense_base_down1()
+        self.dense2 = Dense_base_down2()
 
-#         self.conv1 = nn.Conv2d(30, 32, 3, 1, 1)
-#         self.bn0 = nn.BatchNorm2d(1)
-#         self.bn1 = nn.BatchNorm2d(32)
-#         self.bn2 = nn.BatchNorm2d(24)
-#         self.relu = nn.ReLU()
-#         self.conv2 = nn.Conv2d(32, 24, 3, 1, 1)
-#         self.fc1 = nn.Linear(24576, 128)
-#         self.bnfc = nn.BatchNorm1d(128)
-#         self.fc2 = nn.Linear(128, 1)
+        self.conv1 = nn.Conv2d(30, 32, 3, 1, 1)
+        self.bn0 = nn.BatchNorm2d(1)
+        self.bn1 = nn.BatchNorm2d(32)
+        self.bn2 = nn.BatchNorm2d(24)
+        self.relu = nn.ReLU()
+        self.conv2 = nn.Conv2d(32, 24, 3, 1, 1)
+        self.fc1 = nn.Linear(24576, 128)
+        self.bnfc = nn.BatchNorm1d(128)
+        self.fc2 = nn.Linear(128, 1)
 
-#     def forward(self, x):
-#         x3 = self.dense2(self.bn0(x))
-#         x2 = self.dense1(self.bn0(x))
-#         x1 = self.dense0(self.bn0(x))
+    def forward(self, x):
+        x3 = self.dense2(self.bn0(x))
+        x2 = self.dense1(self.bn0(x))
+        x1 = self.dense0(self.bn0(x))
 
-#         output = torch.cat([x1, x2, x3], 1)
+        output = torch.cat([x1, x2, x3], 1)
 
-#         output = self.relu(self.bn1(self.conv1(output)))
-#         output = self.relu(self.bn2(self.conv2(output)))
+        output = self.relu(self.bn1(self.conv1(output)))
+        output = self.relu(self.bn2(self.conv2(output)))
 
-#         n, c, h, w = output.shape
+        n, c, h, w = output.shape
 
-#         output = output.view(n, c * h * w)
+        output = output.view(n, c * h * w)
 
-#         output = self.relu(self.bnfc(self.fc1(output)))
-#         output = self.relu(self.fc2(output))
+        output = self.relu(self.bnfc(self.fc1(output)))
+        output = self.relu(self.fc2(output))
 
-#         return output
+        return output
 
 
 class Dilatated(nn.Module):
@@ -510,9 +510,9 @@ class Dilatated(nn.Module):
         return torch.cat([output1, output2, output3], 1)
 
 
-class MultiscaleDQP(nn.Module):
+class MultiscaleQP(nn.Module):
     def __init__(self, scale_factor_flag=0):
-        super(MultiscaleDQP, self).__init__()
+        super(MultiscaleQP, self).__init__()
         self.scale_factor_flag = scale_factor_flag
         self.conv = nn.Conv2d(1, 32, 3, 1, 1)
         self.dilatated = Dilatated()
