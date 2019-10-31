@@ -59,19 +59,19 @@ if __name__ == "__main__":
         default="./databaserelease2/",
         help="path to trn dataset",
     )
-    parser.add_argument("--model", required=False, default=None, help="Checkpoint")
+    parser.add_argument("--model", type=str, required=False, default=None, help="Checkpoint")
     parser.add_argument(
-        "--input", required=False, default="reference", help="Reference or Distorted?"
+        "--input", required=False, type=str, default="reference", help="Reference or Distorted?"
     )
-    parser.add_argument("--visdom", required=False, default=1, help="Use Visdom?")
+    parser.add_argument("--visdom", type=int, required=False, default=1, help="Use Visdom?")
     parser.add_argument(
         "--scale_factor", type=int, required=False, default=0, help="Use scale factor?"
     )
     parser.add_argument(
-        "--generate", required=False, default=False, help="Generate dataset"
+        "--generate", type=bool, required=False, default=False, help="Generate dataset"
     )
     parser.add_argument(
-        "--network", required=False, default="Default", help="Default of DenseDQP?"
+        "--network", type=str, required=False, default="Default", help="Default of DenseDQP?"
     )
     parser.add_argument(
         "--networks",
