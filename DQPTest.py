@@ -7,7 +7,7 @@ import time
 from scipy.stats import pearsonr, spearmanr
 
 from GenDataset import GenDataset
-from models import DenseDQP, Default, MultiscaleDQP
+from models import DenseDQP, Default, MultiscaleDQP, MultiscaleQP
 
 
 def sigmoid(paPSNR):

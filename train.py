@@ -41,7 +41,7 @@ def saveChekpoint(
 def weights_init(m):
     classname = m.__class__.__name__
     if classname.find("Conv") != -1:
-        m.weight.data = torch.nn.init.kaiming_normal(m.weight.data)
+        m.weight.data = torch.nn.init.kaiming_normal_(m.weight.data)
     elif classname.find("Linear") != -1:
         m.weight.data = torch.nn.init.xavier_normal_(
             m.weight.data, torch.nn.init.calculate_gain("relu")
