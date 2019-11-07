@@ -1,12 +1,13 @@
 # DeepVisualQualityPrediction
 
-This project is based on [Estimation of distortion sensitivity for visual quality prediction using a convolutional neural network](https://www.sciencedirect.com/science/article/pii/S1051200418308868).
+Open source implementation of the publication titled [A multi-stream network with different receptive fields to assess visual quality](https://www.researchgate.net/publication/336349460_A_multi-stream_network_with_different_receptive_fields_to_assess_visual_quality) by Luan A. Gonçalves, Ronaldo F. Zampolo and Fabrício B. Barros at [Symposium on Knowledge Discovery, Mining and Learning (KDMiLe)](http://sbbd.org.br/kdmile2019/) 2019.
 
 ## Quick start
 
 - [Managing conda environment](#managing-conda-environment)
 - [Dataset](#dataset)
 - [Training](#training)
+- [Testing](#testing)
 - [Status](#status)
 
 ## Managing conda environment
@@ -28,18 +29,21 @@ We've used the [LIVE dataset](http://live.ece.utexas.edu/research/quality/subjec
 With you're running the code for the first time you'll need to enable the [train.py](https://github.com/LuanAGoncalves/DeepVisualQualityPrediction/blob/master/train.py) script to create dataset files. To do it, run:
 
 ```shell
-$ python -Wi train.py --generate=True
-...
+$ python train.py --input=ref --network=default --visdom=0 --epochs=50 --generate=True
+$ python train.py --input=dist --network=default --visdom=0 --epochs=50 --generate=False
+$ python train.py --input=ref --network=MultiscaleDQP --visdom=0 --epochs=50 --generate=False
+$ python train.py --input=dist --network=MultiscaleDQP --visdom=0 --epochs=50 --generate=False
 ```
 
-If you already created the dataset files, run:
+## Testing
+
+In order to test the models, run:
 
 ```shell
-$ python -Wi train.py
-...
+$ python DQPTest.py --input=<ref od dist> --folder=<models folder> --network=<Default or MultiscaleDQP>
 ```
 
 ## Status
 
 - [x] Reproduce the results of [Estimation of distortion sensitivity for visual quality prediction using a convolutional neural network](https://www.sciencedirect.com/science/article/pii/S1051200418308868)
-- [ ] Use a network with different receptive fields.
+- [x] Use a network with different receptive fields.
