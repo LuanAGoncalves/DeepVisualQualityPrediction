@@ -41,7 +41,7 @@ class RandomCrop(object):
         return ref, dist
 
 
-class GenDataset(nn.Module):
+class GenDataset(torch.utils.data.Dataset):
     def __init__(self, dataroot, outputSize, run, batchSize=32, generate=False):
         super(GenDataset, self).__init__()
         self.eps = 1e-20
