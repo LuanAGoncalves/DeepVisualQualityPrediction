@@ -513,7 +513,7 @@ class Dilatated(nn.Module):
 
         self.scale_factor = ScaleFactor()
 
-    def forward(self, x):
+    def forward(self, x, distType=None):
         output1 = self.stream1(x)
         output2 = self.stream2(x)
         output3 = self.stream3(x)
