@@ -1,6 +1,6 @@
 # DeepVisualQualityPrediction
 
-Open source implementation of the publication titled [A multi-stream network with different receptive fields to assess visual quality](https://www.researchgate.net/publication/336349460_A_multi-stream_network_with_different_receptive_fields_to_assess_visual_quality) by Luan A. Gonçalves, Ronaldo F. Zampolo and Fabrício B. Barros at [Symposium on Knowledge Discovery, Mining and Learning (KDMiLe)](http://sbbd.org.br/kdmile2019/) 2019.
+Open source implementation of the publication titled [A multi-stream network with different receptive fields to assess visual quality](10.5753/kdmile.2019.8790) by Luan A. Gonçalves, Ronaldo F. Zampolo and Fabrício B. Barros at [Symposium on Knowledge Discovery, Mining and Learning (KDMiLe)](http://sbbd.org.br/kdmile2019/) 2019.
 
 ## Quick start
 
